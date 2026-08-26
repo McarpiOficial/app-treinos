@@ -184,11 +184,22 @@
 
     <div class="campo-label">IMAGEM</div>
     <div class="chips" id="modal-ex-imagem-opcoes">
-      <button type="button" class="chip" data-modo="padrao">Padrão</button>
-      <button type="button" class="chip" data-modo="biblioteca">Da biblioteca</button>
-      <button type="button" class="chip" data-modo="foto">Usar foto</button>
+      <button type="button" class="chip" data-modo="auto">Automática</button>
+      <button type="button" class="chip" data-modo="biblioteca">Escolher outra</button>
+      <button type="button" class="chip" data-modo="foto">Usar foto minha</button>
     </div>
-    <div id="modal-ex-biblioteca-grid" style="display:none; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:10px;"></div>
+
+    <div id="modal-ex-preview-auto" style="display:none; align-items:center; gap:12px; margin-top:10px;">
+      <img id="modal-ex-preview-auto-img" src="" alt="Imagem encontrada"
+           style="width:88px; height:66px; object-fit:cover; border-radius:8px; border:1px solid var(--borda); flex-shrink:0;">
+      <div id="modal-ex-preview-auto-nome" style="font-size:12px; color:var(--texto-fraco); line-height:1.35;"></div>
+    </div>
+
+    <div id="modal-ex-area-biblioteca" style="display:none; margin-top:10px;">
+      <input class="campo-input" id="modal-ex-busca" placeholder="Buscar na biblioteca (ex.: crucifixo, agachamento...)">
+      <div id="modal-ex-biblioteca-grid" style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:10px;"></div>
+    </div>
+
     <div id="modal-ex-foto-area" style="display:none; margin-top:10px;">
       <input class="campo-input" type="file" id="modal-ex-foto-input" accept="image/*">
       <img id="modal-ex-foto-preview" style="max-width:100%; margin-top:8px; border-radius:10px; display:none;" alt="Pré-visualização da foto">
@@ -218,6 +229,8 @@
 <div class="toast" id="toast"></div>
 
 <script src="./js/exercicios.js"></script>
+<script src="./js/biblioteca.js"></script>
+<script src="./js/imagens.js"></script>
 <script src="./js/dados.js"></script>
 <script src="./js/aerobico.js"></script>
 <script src="./js/app.js"></script>

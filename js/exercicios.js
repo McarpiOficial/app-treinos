@@ -1,6 +1,6 @@
 // Catálogo padrão (semente) da rotina: dias de treino, exercícios e séries.
 // Extraído dos prints de treino do usuário (5 dias, 3x10 a 12 em cada exercício).
-// Cada exercício tem um "id" (usado para a ilustração em img/ex/<id>.svg) e é
+// Cada exercício tem um "id" e um "lib" (slug da foto em img/lib/<slug>/) e é
 // referenciado por múltiplos dias — a carga, porém, é registrada por DIA+exercício
 // (chave "diaId:exercicioId"), pois o mesmo movimento pode ter pesos diferentes
 // em treinos diferentes da semana (ex.: Dia 1 e Dia 5 repetem tríceps).
@@ -39,28 +39,28 @@ const CATALOGO_PADRAO = {
     }
   ],
   exercicios: {
-    'supino': { nome: 'Supino', series: 3, reps: '10 a 12' },
-    'supino-inclinado': { nome: 'Supino Inclinado', series: 3, reps: '10 a 12' },
-    'fly': { nome: 'Fly', series: 3, reps: '10 a 12' },
-    'triceps-corda': { nome: 'Tríceps Corda', series: 3, reps: '10 a 12' },
-    'triceps-frances': { nome: 'Tríceps Francês', series: 3, reps: '10 a 12' },
-    'triceps-testa': { nome: 'Tríceps Testa', series: 3, reps: '10 a 12' },
-    'remada-curvada': { nome: 'Remada Curvada', series: 3, reps: '10 a 12' },
-    'remada-aberta': { nome: 'Remada Aberta', series: 3, reps: '10 a 12' },
-    'puxada-aberta': { nome: 'Puxada Aberta', series: 3, reps: '10 a 12' },
-    'rosca-scott': { nome: 'Rosca Scott', series: 3, reps: '10 a 12' },
-    'rosca-martelo': { nome: 'Rosca Martelo', series: 3, reps: '10 a 12' },
-    'rosca-direta': { nome: 'Rosca Direta', series: 3, reps: '10 a 12' },
-    'agachamento-hack': { nome: 'Agachamento Hack', series: 3, reps: '10 a 12' },
-    'cadeira-extensora': { nome: 'Cadeira Extensora', series: 3, reps: '10 a 12' },
-    'adutora': { nome: 'Adutora', series: 3, reps: '10 a 12' },
-    'mesa-flexora': { nome: 'Mesa Flexora', series: 3, reps: '10 a 12' },
-    'cadeira-flexora': { nome: 'Cadeira Flexora', series: 3, reps: '10 a 12' },
-    'leg-press': { nome: 'Leg Press', series: 3, reps: '10 a 12' },
-    'crucifixo-inverso': { nome: 'Crucifixo Inverso', series: 3, reps: '10 a 12' },
-    'elevacao-frontal': { nome: 'Elevação Frontal', series: 3, reps: '10 a 12' },
-    'elevacao-lateral': { nome: 'Elevação Lateral', series: 3, reps: '10 a 12' },
-    'desenvolvimento': { nome: 'Desenvolvimento', series: 3, reps: '10 a 12' }
+    'supino': { nome: 'Supino', series: 3, reps: '10 a 12', lib: 'supino-reto' },
+    'supino-inclinado': { nome: 'Supino Inclinado', series: 3, reps: '10 a 12', lib: 'supino-inclinado' },
+    'fly': { nome: 'Fly', series: 3, reps: '10 a 12', lib: 'voador-peck-deck' },
+    'triceps-corda': { nome: 'Tríceps Corda', series: 3, reps: '10 a 12', lib: 'triceps-corda' },
+    'triceps-frances': { nome: 'Tríceps Francês', series: 3, reps: '10 a 12', lib: 'triceps-frances' },
+    'triceps-testa': { nome: 'Tríceps Testa', series: 3, reps: '10 a 12', lib: 'triceps-testa' },
+    'remada-curvada': { nome: 'Remada Curvada', series: 3, reps: '10 a 12', lib: 'remada-curvada' },
+    'remada-aberta': { nome: 'Remada Aberta', series: 3, reps: '10 a 12', lib: 'remada-sentada-baixa' },
+    'puxada-aberta': { nome: 'Puxada Aberta', series: 3, reps: '10 a 12', lib: 'puxada-aberta' },
+    'rosca-scott': { nome: 'Rosca Scott', series: 3, reps: '10 a 12', lib: 'rosca-scott' },
+    'rosca-martelo': { nome: 'Rosca Martelo', series: 3, reps: '10 a 12', lib: 'rosca-martelo' },
+    'rosca-direta': { nome: 'Rosca Direta', series: 3, reps: '10 a 12', lib: 'rosca-direta' },
+    'agachamento-hack': { nome: 'Agachamento Hack', series: 3, reps: '10 a 12', lib: 'agachamento-hack' },
+    'cadeira-extensora': { nome: 'Cadeira Extensora', series: 3, reps: '10 a 12', lib: 'cadeira-extensora' },
+    'adutora': { nome: 'Adutora', series: 3, reps: '10 a 12', lib: 'cadeira-adutora' },
+    'mesa-flexora': { nome: 'Mesa Flexora', series: 3, reps: '10 a 12', lib: 'mesa-flexora' },
+    'cadeira-flexora': { nome: 'Cadeira Flexora', series: 3, reps: '10 a 12', lib: 'cadeira-flexora' },
+    'leg-press': { nome: 'Leg Press', series: 3, reps: '10 a 12', lib: 'leg-press' },
+    'crucifixo-inverso': { nome: 'Crucifixo Inverso', series: 3, reps: '10 a 12', lib: 'crucifixo-inverso-na-maquina' },
+    'elevacao-frontal': { nome: 'Elevação Frontal', series: 3, reps: '10 a 12', lib: 'elevacao-frontal' },
+    'elevacao-lateral': { nome: 'Elevação Lateral', series: 3, reps: '10 a 12', lib: 'elevacao-lateral' },
+    'desenvolvimento': { nome: 'Desenvolvimento', series: 3, reps: '10 a 12', lib: 'desenvolvimento-com-halteres' }
   },
   tiposAerobico: ['Spinning', 'Esteira', 'Bike', 'Elíptico', 'Corrida', 'Caminhada', 'Escada', 'Natação', 'Outro']
 };

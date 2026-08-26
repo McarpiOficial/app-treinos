@@ -77,10 +77,21 @@ const Dados = (function () {
     carregar();
     const ex = CATALOGO.exercicios[exercicioId];
     if (!ex) return;
+    const nomeMudou = dadosNovos.nome != null && dadosNovos.nome !== ex.nome;
+
     if (dadosNovos.nome != null) ex.nome = dadosNovos.nome;
     if (dadosNovos.series != null) ex.series = dadosNovos.series;
     if (dadosNovos.reps != null) ex.reps = dadosNovos.reps;
     if ('imagem' in dadosNovos) ex.imagem = dadosNovos.imagem;
+
+    // Trocar o exercício é justamente o caso em que a imagem precisa ser
+    // refeita: se ela não foi escolhida à mão (foto ou item da biblioteca),
+    // procuramos de novo a partir do nome novo.
+    const escolhaManual = ex.imagem && (ex.imagem.tipo === 'foto' || ex.imagem.tipo === 'biblioteca');
+    if (nomeMudou && !escolhaManual) {
+      ex.lib = null;
+      ex.imagem = { tipo: 'auto', valor: Imagens.buscarSlug(ex.nome) };
+    }
     sincronizarCatalogo();
   }
 
@@ -89,11 +100,15 @@ const Dados = (function () {
     const dia = diaPorId(diaId);
     if (!dia) return null;
     const id = gerarIdExercicio(dadosNovo.nome);
+    // Sem escolha manual de imagem, o app procura sozinho na biblioteca.
+    const imagem = dadosNovo.imagem && dadosNovo.imagem.valor
+      ? dadosNovo.imagem
+      : { tipo: 'auto', valor: Imagens.buscarSlug(dadosNovo.nome) };
     CATALOGO.exercicios[id] = {
       nome: dadosNovo.nome,
       series: dadosNovo.series || 3,
       reps: dadosNovo.reps || '10 a 12',
-      imagem: dadosNovo.imagem || null
+      imagem: imagem
     };
     dia.exercicios.push(id);
     sincronizarCatalogo();
@@ -112,15 +127,37 @@ const Dados = (function () {
     sincronizarCatalogo();
   }
 
-  function imagemExercicio(exercicioId) {
+  // Descobre qual imagem representa um exercício. A ordem de prioridade é:
+  //   1. foto que o usuário anexou (manda sempre)
+  //   2. escolha manual na biblioteca
+  //   3. slug já resolvido (semente, ou casamento automático salvo)
+  //   4. casamento automático pelo nome, na hora
+  //   5. ícone genérico
+  function framesExercicio(exercicioId) {
     const ex = CATALOGO.exercicios[exercicioId];
-    const img = ex && ex.imagem;
-    if (img && img.tipo === 'foto' && img.valor) return img.valor;
-    if (img && img.tipo === 'biblioteca' && img.valor) return './img/ex/' + img.valor + '.svg';
-    // "padrão": os 22 exercícios originais têm ilustração própria pelo id;
-    // um exercício novo, criado pelo usuário, cai no ícone genérico.
-    if (CATALOGO_PADRAO.exercicios[exercicioId]) return './img/ex/' + exercicioId + '.svg';
-    return './img/ex/_generico.svg';
+    if (!ex) return [Imagens.generico];
+    const img = ex.imagem;
+
+    if (img && img.tipo === 'foto' && img.valor) return [img.valor];
+    if (img && (img.tipo === 'biblioteca' || img.tipo === 'auto') && img.valor) {
+      const frames = Imagens.framesDoSlug(img.valor);
+      if (frames) return frames;
+    }
+    if (ex.lib) {
+      const frames = Imagens.framesDoSlug(ex.lib);
+      if (frames) return frames;
+    }
+    const slug = Imagens.buscarSlug(ex.nome);
+    if (slug) {
+      const frames = Imagens.framesDoSlug(slug);
+      if (frames) return frames;
+    }
+    return [Imagens.generico];
+  }
+
+  // Primeiro quadro — usado nas miniaturas.
+  function imagemExercicio(exercicioId) {
+    return framesExercicio(exercicioId)[0];
   }
 
   let salvarPendente = null;
@@ -364,6 +401,7 @@ const Dados = (function () {
     adicionarExercicio: adicionarExercicio,
     removerExercicioDoDia: removerExercicioDoDia,
     imagemExercicio: imagemExercicio,
+    framesExercicio: framesExercicio,
     exportarJSON: exportarJSON,
     importarJSON: importarJSON,
     apagarTudo: apagarTudo

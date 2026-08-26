@@ -158,9 +158,15 @@ const App = (function () {
     const pesoAnterior = historico.length ? historico[historico.length - 1].peso : null;
     const passo = Dados.getEstado().passoPeso;
 
+    const frames = Dados.framesExercicio(exId);
+    const temMovimento = frames.length > 1;
+
     card.innerHTML =
-      '<div class="exercicio-cabecalho">'
-      + '  <button class="exercicio-thumb" data-acao="zoom"><img src="' + Dados.imagemExercicio(exId) + '" alt="' + info.nome + '"><span class="lupa">🔍</span></button>'
+      '<button class="exercicio-foto" data-acao="zoom">'
+      + '  <img src="' + frames[0] + '" alt="' + info.nome + '" loading="lazy">'
+      + '  <span class="exercicio-foto-dica">' + (temMovimento ? '▶ ver movimento' : '🔍 ampliar') + '</span>'
+      + '</button>'
+      + '<div class="exercicio-cabecalho">'
       + '  <div class="exercicio-info">'
       + '    <div class="nome">' + info.nome + '</div>'
       + '    <div class="series-alvo">' + info.series + '× ' + info.reps + '</div>'
@@ -208,7 +214,7 @@ const App = (function () {
     };
     pesoInput().oninput = salvarPeso;
     card.querySelector('[data-acao="zoom"]').onclick = function () {
-      abrirZoom(Dados.imagemExercicio(exId), info.nome);
+      abrirZoom(Dados.framesExercicio(exId), info.nome);
     };
     card.querySelector('[data-acao="editar-exercicio"]').onclick = function () {
       abrirModalExercicio(diaId, exId);
@@ -275,9 +281,13 @@ const App = (function () {
     el('modal-ex-reps').value = info ? info.reps : '10 a 12';
     el('modal-ex-excluir').style.display = criando ? 'none' : 'block';
 
-    modalExImagem = (info && info.imagem) ? info.imagem : { tipo: 'padrao', valor: null };
-    preencherGridBibliotecaExercicio();
+    if (info && info.imagem && info.imagem.valor) modalExImagem = info.imagem;
+    else if (info && info.lib) modalExImagem = { tipo: 'auto', valor: info.lib };
+    else modalExImagem = { tipo: 'auto', valor: info ? Imagens.buscarSlug(info.nome) : null };
+
+    el('modal-ex-busca').value = '';
     el('modal-ex-foto-input').value = '';
+    preencherGridBibliotecaExercicio();
     atualizarModoImagemExercicio();
     el('modal-exercicio').classList.add('ativo');
   }
@@ -287,44 +297,65 @@ const App = (function () {
     modalExContexto = null;
   }
 
-  function preencherGridBibliotecaExercicio() {
+  // Grade da biblioteca: por padrão mostra os exercícios mais parecidos com o
+  // nome digitado; o campo de busca permite procurar qualquer um dos 136.
+  function preencherGridBibliotecaExercicio(termoBusca) {
     const grid = el('modal-ex-biblioteca-grid');
-    if (grid.dataset.preenchido) return;
-    grid.dataset.preenchido = '1';
-    Object.keys(CATALOGO_PADRAO.exercicios).forEach(function (id) {
-      const infoPadrao = CATALOGO_PADRAO.exercicios[id];
+    const termo = termoBusca != null ? termoBusca : (el('modal-ex-nome').value || '');
+    const resultados = Imagens.procurar(termo, 24);
+    grid.innerHTML = '';
+    if (!resultados.length) {
+      grid.innerHTML = '<div class="vazio" style="grid-column:1/-1;">Nada encontrado. Tente outro termo ou use uma foto sua.</div>';
+      return;
+    }
+    resultados.forEach(function (item) {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'btn-secundario';
       btn.style.padding = '4px';
-      btn.dataset.id = id;
-      btn.innerHTML = '<img src="./img/ex/' + id + '.svg" alt="' + infoPadrao.nome + '" style="width:100%; height:52px; object-fit:contain; display:block;">'
-        + '<div style="font-size:10px; margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">' + infoPadrao.nome + '</div>';
+      btn.dataset.id = item.slug;
+      btn.innerHTML = '<img src="./img/lib/' + item.slug + '/0.jpg" alt="' + item.nome + '" loading="lazy" style="width:100%; height:64px; object-fit:cover; border-radius:6px; display:block;">'
+        + '<div style="font-size:10px; margin-top:4px; line-height:1.2;">' + item.nome + '</div>';
       btn.onclick = function () {
-        modalExImagem = { tipo: 'biblioteca', valor: id };
+        modalExImagem = { tipo: 'biblioteca', valor: item.slug };
         marcarSelecaoGridBiblioteca();
       };
       grid.appendChild(btn);
     });
+    marcarSelecaoGridBiblioteca();
   }
 
   function marcarSelecaoGridBiblioteca() {
     const grid = el('modal-ex-biblioteca-grid');
     Array.from(grid.children).forEach(function (btn) {
-      const selecionado = modalExImagem.tipo === 'biblioteca' && btn.dataset.id === modalExImagem.valor;
+      if (!btn.dataset.id) return;
+      const selecionado = (modalExImagem.tipo === 'biblioteca' || modalExImagem.tipo === 'auto')
+        && btn.dataset.id === modalExImagem.valor;
       btn.style.borderColor = selecionado ? 'var(--laranja)' : 'var(--borda)';
     });
   }
 
   function atualizarModoImagemExercicio() {
+    const modo = modalExImagem.tipo === 'padrao' ? 'auto' : modalExImagem.tipo;
     Array.from(el('modal-ex-imagem-opcoes').children).forEach(function (chip) {
-      chip.classList.toggle('selecionado', chip.dataset.modo === modalExImagem.tipo);
+      chip.classList.toggle('selecionado', chip.dataset.modo === modo);
     });
-    el('modal-ex-biblioteca-grid').style.display = modalExImagem.tipo === 'biblioteca' ? 'grid' : 'none';
-    el('modal-ex-foto-area').style.display = modalExImagem.tipo === 'foto' ? 'block' : 'none';
+    el('modal-ex-area-biblioteca').style.display = modo === 'biblioteca' ? 'block' : 'none';
+    el('modal-ex-foto-area').style.display = modo === 'foto' ? 'block' : 'none';
+    el('modal-ex-preview-auto').style.display = modo === 'auto' ? 'flex' : 'none';
+
+    if (modo === 'auto') {
+      const slug = modalExImagem.valor || Imagens.buscarSlug(el('modal-ex-nome').value);
+      const item = slug ? Imagens.porSlug(slug) : null;
+      el('modal-ex-preview-auto-img').src = item ? './img/lib/' + item.slug + '/0.jpg' : Imagens.generico;
+      el('modal-ex-preview-auto-nome').textContent = item
+        ? 'Encontrado: ' + item.nome
+        : 'Nenhuma foto encontrada para esse nome — será usado o ícone genérico.';
+    }
+
     marcarSelecaoGridBiblioteca();
     const preview = el('modal-ex-foto-preview');
-    if (modalExImagem.tipo === 'foto' && modalExImagem.valor) {
+    if (modo === 'foto' && modalExImagem.valor) {
       preview.src = modalExImagem.valor;
       preview.style.display = 'block';
     } else {
@@ -353,11 +384,31 @@ const App = (function () {
   function configurarModalExercicio() {
     Array.from(el('modal-ex-imagem-opcoes').children).forEach(function (chip) {
       chip.onclick = function () {
-        const manterValor = modalExImagem.tipo === chip.dataset.modo;
-        modalExImagem = { tipo: chip.dataset.modo, valor: manterValor ? modalExImagem.valor : null };
+        const modo = chip.dataset.modo;
+        if (modo === 'auto') {
+          // volta a deixar o app escolher a foto pelo nome
+          modalExImagem = { tipo: 'auto', valor: Imagens.buscarSlug(el('modal-ex-nome').value) };
+        } else if (modo === 'biblioteca') {
+          modalExImagem = { tipo: 'biblioteca', valor: modalExImagem.valor || null };
+          preencherGridBibliotecaExercicio();
+        } else {
+          modalExImagem = { tipo: 'foto', valor: modalExImagem.tipo === 'foto' ? modalExImagem.valor : null };
+        }
         atualizarModoImagemExercicio();
       };
     });
+
+    // Digitou outro nome: se a imagem está no automático, já reflete a nova foto.
+    el('modal-ex-nome').oninput = function () {
+      if (modalExImagem.tipo === 'auto' || modalExImagem.tipo === 'padrao') {
+        modalExImagem = { tipo: 'auto', valor: Imagens.buscarSlug(el('modal-ex-nome').value) };
+        atualizarModoImagemExercicio();
+      }
+    };
+
+    el('modal-ex-busca').oninput = function (e) {
+      preencherGridBibliotecaExercicio(e.target.value);
+    };
 
     el('modal-ex-foto-input').onchange = function (e) {
       const arquivo = e.target.files && e.target.files[0];
@@ -404,17 +455,42 @@ const App = (function () {
   }
 
   // ---- Zoom de imagem ----
+  // A biblioteca traz 2 quadros por exercício (início e fim do movimento).
+  // Em tela cheia eles se alternam sozinhos, o que mostra a execução —
+  // é o que serve para tirar dúvida de como fazer.
   let zoomEscala = 1;
-  function abrirZoom(src, titulo) {
+  let zoomFrames = [];
+  let zoomIndice = 0;
+  let zoomTimer = null;
+
+  function abrirZoom(srcOuFrames, titulo) {
     const overlay = el('zoom-overlay');
     const img = el('zoom-img');
-    img.src = src;
+    zoomFrames = Array.isArray(srcOuFrames) ? srcOuFrames : [srcOuFrames];
+    zoomIndice = 0;
+    img.src = zoomFrames[0];
     img.style.transform = 'scale(1)';
     zoomEscala = 1;
-    el('zoom-legenda').textContent = titulo + ' — toque duas vezes ou belisque para ampliar';
+
+    pararAnimacaoZoom();
+    if (zoomFrames.length > 1) {
+      el('zoom-legenda').textContent = titulo + ' — mostrando o movimento; belisque para ampliar';
+      zoomTimer = setInterval(function () {
+        zoomIndice = (zoomIndice + 1) % zoomFrames.length;
+        img.src = zoomFrames[zoomIndice];
+      }, 900);
+    } else {
+      el('zoom-legenda').textContent = titulo + ' — toque duas vezes ou belisque para ampliar';
+    }
     overlay.classList.add('ativo');
   }
+
+  function pararAnimacaoZoom() {
+    if (zoomTimer) { clearInterval(zoomTimer); zoomTimer = null; }
+  }
+
   function fecharZoom() {
+    pararAnimacaoZoom();
     el('zoom-overlay').classList.remove('ativo');
   }
   function configurarZoomGestos() {

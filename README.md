@@ -11,13 +11,15 @@ dados ficam salvos só no aparelho** (localStorage), sem servidor e sem login.
 - **Treino do dia**: exercícios com ilustração (toque para ampliar em tela
   cheia, com pinça/duplo-toque), registro do peso usado (botões −/+ ou digitar)
   e marcação das 3 séries.
-- **Exercícios editáveis**: a rotina muda com o tempo, então cada exercício
-  pode ser renomeado, ter séries/repetições ajustadas ou ser removido do dia
-  (toque no ✏️ no card), e é possível adicionar um exercício novo a qualquer
-  dia ("+ Adicionar exercício"). Para a imagem de um exercício novo, escolha
-  entre reaproveitar uma das 22 ilustrações já existentes ("Da biblioteca") ou
-  anexar uma foto da galeria/câmera do celular ("Usar foto") — sem foto ou
-  escolha, fica um ícone genérico neutro.
+- **Exercícios editáveis, com imagem automática**: a rotina muda com o tempo,
+  então cada exercício pode ser renomeado, ter séries/repetições ajustadas ou
+  ser removido do dia (toque no ✏️ no card), e dá para adicionar exercícios
+  novos a qualquer dia. **Ao criar ou renomear, o app procura sozinho a foto
+  correspondente** numa biblioteca de 136 exercícios — a busca entende
+  sinônimos, então "peck deck", "crucifixo máquina" e "voador" caem no mesmo
+  lugar. Se o palpite errar, "Escolher outra" abre a biblioteca com busca, e
+  "Usar foto minha" aceita uma foto da galeria/câmera. Escolha manual é
+  respeitada e não é sobrescrita depois.
 - **Aeróbico**: lista de sessões (spinning, esteira etc.) com tipo, tempo e
   calorias — usada normalmente às terças, quintas e domingos.
 - **Progresso**: gráfico de evolução de carga por exercício, histórico de
@@ -48,27 +50,38 @@ node scripts/dev-server.js
 
 Depois abra `http://localhost:8792` no navegador.
 
-## Regenerar ilustrações/ícones (opcional)
+## Biblioteca de imagens
 
-As ilustrações dos exercícios (`img/ex/*.svg`) e os ícones do PWA
-(`img/icone-192.png`, `img/icone-512.png`) são gerados por script — só
-precisa rodar de novo se quiser alterá-los:
+As fotos dos exercícios (`img/lib/`) vêm da
+[free-exercise-db](https://github.com/yuhonas/free-exercise-db), base pública
+em domínio público (Unlicense). São 2 fotos por exercício — início e fim do
+movimento —, e é por isso que a tela cheia alterna entre elas para mostrar a
+execução.
+
+Para acrescentar exercícios à biblioteca, adicione a entrada em
+`scripts/dicionario-exercicios.js` (nome em português, nome exato na base e
+sinônimos de busca) e rode:
 
 ```bash
-node scripts/gerar-svgs.js
-node scripts/gerar-icones.js
+npm install sharp
+node scripts/gerar-biblioteca.js
 ```
+
+O script baixa as fotos, reduz para 520px (~24 KB cada) e regrava o índice
+`js/biblioteca.js`. Os ícones do PWA vêm de `node scripts/gerar-icones.js`.
 
 ## Estrutura
 
 ```
 index.html            shell do app e as 4 telas
 css/app.css            tema visual (mobile-first)
-js/exercicios.js        catálogo dos 5 dias e 22 exercícios
+js/exercicios.js        catálogo dos 5 dias e dos exercícios (editável)
 js/dados.js             leitura/escrita no localStorage
 js/app.js               navegação, telas, zoom, backup
 js/aerobico.js           tela de aeróbico
-img/ex/*.svg            ilustrações dos exercícios
+js/biblioteca.js        índice da biblioteca de fotos (gerado)
+js/imagens.js           casa o nome do exercício com a foto certa
+img/lib/<slug>/*.jpg    fotos dos exercícios (2 por movimento)
 manifest.webmanifest    configuração do PWA
 sw.js                   service worker (funcionamento offline)
 scripts/                geração de ícones/ilustrações e servidor de preview
