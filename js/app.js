@@ -674,8 +674,27 @@ const App = (function () {
     Aerobico.init();
 
     if ('serviceWorker' in navigator) {
+      // Quando sai uma versão nova do app, o service worker novo assume o
+      // controle da página. Sem isso aqui, a tela continuaria mostrando a
+      // versão velha até o app ser aberto de novo — recarregamos na hora.
+      const jaTinhaControlador = !!navigator.serviceWorker.controller;
+      let recarregando = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        // Na primeira instalação também há troca de controlador, mas aí a tela
+        // já está atualizada: recarregar só faria piscar à toa.
+        if (!jaTinhaControlador || recarregando) return;
+        recarregando = true;
+        window.location.reload();
+      });
+
       window.addEventListener('load', function () {
-        navigator.serviceWorker.register('./sw.js').catch(function (e) { console.warn('SW não registrado:', e); });
+        navigator.serviceWorker.register('./sw.js').then(function (registro) {
+          // Procura atualização assim que abre e também ao voltar para o app.
+          registro.update().catch(function () {});
+          document.addEventListener('visibilitychange', function () {
+            if (!document.hidden) registro.update().catch(function () {});
+          });
+        }).catch(function (e) { console.warn('SW não registrado:', e); });
       });
     }
 
