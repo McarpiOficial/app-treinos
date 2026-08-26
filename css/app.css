@@ -1,0 +1,447 @@
+/* Tema escuro + laranja, mobile-first — mesmo espírito visual dos prints de treino. */
+:root {
+  --bg: #0b0b0d;
+  --bg-elevado: #16161a;
+  --bg-card: #1c1c21;
+  --borda: #2a2a30;
+  --texto: #f2f2f2;
+  --texto-fraco: #9a9aa2;
+  --laranja: #ff5a1f;
+  --laranja-fraco: #ff5a1f33;
+  --verde: #35c46a;
+  --vermelho: #ef4444;
+  --raio: 14px;
+  --nav-altura: 64px;
+  --sombra: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--texto);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+  overflow-x: hidden;
+  padding-bottom: calc(var(--nav-altura) + env(safe-area-inset-bottom, 0px) + 10px);
+}
+
+button, input, select { font-family: inherit; }
+
+#app {
+  max-width: 560px;
+  margin: 0 auto;
+  min-height: 100vh;
+  padding: 16px 16px 8px;
+}
+
+.tela { display: none; animation: entra 0.15s ease-out; }
+.tela.ativa { display: block; }
+
+@keyframes entra {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ---- Cabeçalhos ---- */
+.topo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.topo h1 { font-size: 20px; margin: 0; }
+.btn-voltar {
+  background: var(--bg-card);
+  border: 1px solid var(--borda);
+  color: var(--texto);
+  border-radius: 10px;
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ---- Cards genéricos ---- */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  padding: 16px;
+  margin-bottom: 14px;
+  box-shadow: var(--sombra);
+}
+
+/* ---- Tela Semana ---- */
+.card-semana {
+  background: linear-gradient(135deg, #201409, #1c1c21);
+  border: 1px solid var(--laranja-fraco);
+  text-align: center;
+  padding: 22px 16px;
+}
+.card-semana .numero {
+  font-size: 40px;
+  font-weight: 800;
+  color: var(--laranja);
+  line-height: 1.1;
+}
+.card-semana .legenda { color: var(--texto-fraco); font-size: 13px; margin-top: 4px; }
+.card-semana .barra-progresso { margin-top: 14px; }
+
+.barra-progresso {
+  background: var(--bg-elevado);
+  border-radius: 999px;
+  height: 10px;
+  overflow: hidden;
+}
+.barra-progresso > div {
+  height: 100%;
+  background: var(--laranja);
+  border-radius: 999px;
+  transition: width 0.2s ease;
+}
+.barra-progresso-legenda {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--texto-fraco);
+  margin-top: 6px;
+}
+
+.grade-dias {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 4px;
+}
+.dia-card {
+  background: var(--bg-card);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  padding: 14px;
+  text-align: left;
+  color: var(--texto);
+  position: relative;
+}
+.dia-card .dia-num { font-size: 12px; color: var(--laranja); font-weight: 700; letter-spacing: 0.05em; }
+.dia-card .dia-foco { font-size: 15px; font-weight: 600; margin-top: 4px; line-height: 1.25; }
+.dia-card .dia-status { font-size: 12px; color: var(--texto-fraco); margin-top: 8px; }
+.dia-card.concluido { border-color: var(--verde); }
+.dia-card.concluido .check {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  color: var(--verde);
+  font-size: 16px;
+}
+
+.btn-principal {
+  width: 100%;
+  padding: 14px;
+  border-radius: var(--raio);
+  border: none;
+  background: var(--laranja);
+  color: #1a0d05;
+  font-weight: 700;
+  font-size: 15px;
+  margin-top: 8px;
+}
+.btn-principal:disabled { background: var(--bg-elevado); color: var(--texto-fraco); }
+.btn-secundario {
+  width: 100%;
+  padding: 12px;
+  border-radius: var(--raio);
+  border: 1px solid var(--borda);
+  background: transparent;
+  color: var(--texto);
+  font-weight: 600;
+  font-size: 14px;
+}
+.btn-perigo { color: var(--vermelho); border-color: var(--vermelho); }
+
+.resumo-mini {
+  display: flex;
+  justify-content: space-between;
+  text-align: center;
+}
+.resumo-mini > div { flex: 1; }
+.resumo-mini .valor { font-size: 18px; font-weight: 700; color: var(--laranja); }
+.resumo-mini .rotulo { font-size: 11px; color: var(--texto-fraco); margin-top: 2px; }
+
+/* ---- Tela Treino ---- */
+.cabecalho-treino {
+  background: linear-gradient(135deg, #201409, #0b0b0d);
+  border-radius: var(--raio);
+  padding: 18px 16px;
+  margin-bottom: 16px;
+  border: 1px solid var(--laranja-fraco);
+}
+.cabecalho-treino .dia-num { color: var(--laranja); font-weight: 700; font-size: 13px; letter-spacing: 0.05em; }
+.cabecalho-treino h2 { margin: 4px 0 0; font-size: 22px; }
+.cabecalho-treino .sub { color: var(--texto-fraco); font-size: 13px; margin-top: 4px; }
+
+.exercicio-card { padding: 14px; }
+.exercicio-cabecalho { display: flex; gap: 12px; align-items: center; }
+.exercicio-thumb {
+  width: 76px;
+  height: 76px;
+  border-radius: 10px;
+  background: #000;
+  border: 1px solid var(--borda);
+  flex-shrink: 0;
+  overflow: hidden;
+  position: relative;
+}
+.exercicio-thumb img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.exercicio-thumb .lupa {
+  position: absolute;
+  bottom: 3px;
+  right: 3px;
+  background: rgba(0,0,0,0.6);
+  border-radius: 6px;
+  font-size: 11px;
+  padding: 2px 4px;
+  color: #fff;
+}
+.exercicio-info { flex: 1; min-width: 0; }
+.exercicio-info .nome { font-weight: 700; font-size: 16px; }
+.exercicio-info .series-alvo { color: var(--texto-fraco); font-size: 13px; margin-top: 2px; }
+
+.bloco-peso {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+.btn-peso {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid var(--borda);
+  background: var(--bg-elevado);
+  color: var(--texto);
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-peso:active { background: var(--laranja-fraco); }
+.valor-peso {
+  min-width: 92px;
+  text-align: center;
+  font-size: 26px;
+  font-weight: 800;
+  background: transparent;
+  border: none;
+  color: var(--texto);
+}
+.valor-peso-unidade { font-size: 13px; color: var(--texto-fraco); text-align: center; margin-top: -6px; }
+.dica-peso {
+  text-align: center;
+  font-size: 12px;
+  color: var(--texto-fraco);
+  margin-top: 6px;
+}
+.dica-peso .delta-pos { color: var(--verde); font-weight: 600; }
+.dica-peso .delta-neg { color: var(--vermelho); font-weight: 600; }
+
+.serie-bolinhas {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 14px;
+}
+.bolinha-serie {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 2px solid var(--borda);
+  background: transparent;
+  color: var(--texto-fraco);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.bolinha-serie.feita {
+  border-color: var(--verde);
+  background: var(--verde);
+  color: #06210f;
+}
+
+.rodape-treino { margin-top: 20px; }
+
+/* ---- Zoom de imagem ---- */
+.zoom-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.92);
+  z-index: 50;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
+}
+.zoom-overlay.ativo { display: flex; }
+.zoom-overlay img {
+  max-width: 92vw;
+  max-height: 80vh;
+  touch-action: none;
+  transform-origin: center center;
+}
+.zoom-fechar {
+  position: absolute;
+  top: max(16px, env(safe-area-inset-top));
+  right: 16px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.12);
+  border: none;
+  color: #fff;
+  font-size: 20px;
+}
+.zoom-legenda {
+  position: absolute;
+  bottom: max(20px, env(safe-area-inset-bottom));
+  left: 0; right: 0;
+  text-align: center;
+  color: var(--texto-fraco);
+  font-size: 12px;
+}
+
+/* ---- Aeróbico ---- */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.chip {
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--borda);
+  background: var(--bg-elevado);
+  color: var(--texto);
+  font-size: 13px;
+}
+.chip.selecionado { background: var(--laranja); color: #1a0d05; border-color: var(--laranja); font-weight: 700; }
+.campo-label { font-size: 12px; color: var(--texto-fraco); margin-top: 14px; margin-bottom: 4px; }
+.campo-input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid var(--borda);
+  background: var(--bg-elevado);
+  color: var(--texto);
+  font-size: 15px;
+}
+
+.resumo-linha { display: flex; gap: 10px; margin-bottom: 14px; }
+.resumo-linha .card { flex: 1; margin-bottom: 0; text-align: center; padding: 12px; }
+.resumo-linha .valor { font-size: 18px; font-weight: 700; color: var(--laranja); }
+.resumo-linha .rotulo { font-size: 11px; color: var(--texto-fraco); margin-top: 2px; }
+
+.grupo-mes { font-size: 13px; color: var(--texto-fraco); margin: 18px 0 8px; text-transform: uppercase; letter-spacing: 0.04em; }
+.item-aerobico {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+}
+.item-aerobico .info-principal { font-weight: 600; font-size: 14px; }
+.item-aerobico .info-secundaria { font-size: 12px; color: var(--texto-fraco); margin-top: 2px; }
+.item-aerobico .acoes { display: flex; gap: 8px; }
+.icone-botao {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid var(--borda);
+  background: var(--bg-elevado);
+  color: var(--texto);
+  font-size: 15px;
+}
+
+.vazio { text-align: center; color: var(--texto-fraco); font-size: 13px; padding: 24px 0; }
+
+/* ---- Progresso ---- */
+.seletor-exercicio { width: 100%; }
+.grafico-svg { width: 100%; height: 180px; }
+.lista-simples { list-style: none; margin: 0; padding: 0; }
+.lista-simples li {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--borda);
+  font-size: 13px;
+  color: var(--texto-fraco);
+  display: flex;
+  justify-content: space-between;
+}
+.lista-simples li:last-child { border-bottom: none; }
+
+/* ---- Navegação inferior ---- */
+.nav-inferior {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: var(--nav-altura);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: var(--bg-elevado);
+  border-top: 1px solid var(--borda);
+  display: flex;
+  z-index: 20;
+}
+.nav-item {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--texto-fraco);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  font-size: 11px;
+}
+.nav-item .icone { font-size: 19px; }
+.nav-item.ativo { color: var(--laranja); }
+
+/* ---- Modal simples (editar aeróbico / digitar peso) ---- */
+.modal-fundo {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: none;
+  align-items: flex-end;
+  z-index: 40;
+}
+.modal-fundo.ativo { display: flex; }
+.modal-conteudo {
+  background: var(--bg-card);
+  border-top: 1px solid var(--borda);
+  border-radius: 18px 18px 0 0;
+  padding: 20px 16px calc(20px + env(safe-area-inset-bottom, 0px));
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+}
+.modal-conteudo h3 { margin: 0 0 12px; font-size: 17px; }
+.modal-linha-botoes { display: flex; gap: 10px; margin-top: 16px; }
+.modal-linha-botoes > * { flex: 1; }
+
+.toast {
+  position: fixed;
+  bottom: calc(var(--nav-altura) + 16px);
+  left: 16px; right: 16px;
+  background: var(--bg-elevado);
+  border: 1px solid var(--laranja);
+  color: var(--texto);
+  padding: 12px 14px;
+  border-radius: 12px;
+  text-align: center;
+  font-size: 13px;
+  z-index: 60;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.2s ease;
+  pointer-events: none;
+}
+.toast.mostrar { opacity: 1; transform: translateY(0); }
+
+a { color: var(--laranja); }

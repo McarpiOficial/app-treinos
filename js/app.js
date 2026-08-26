@@ -1,0 +1,623 @@
+// Navegação e renderização das telas: Semana, Treino, Aeróbico (ver js/aerobico.js),
+// Progresso. Tudo renderizado via JS puro (sem framework), lendo/gravando pelo
+// módulo Dados (js/dados.js) — que é a única fonte de verdade dos dados salvos.
+const App = (function () {
+  let telaAtual = 'semana';
+  let diaEmVisualizacao = null;
+
+  function el(id) { return document.getElementById(id); }
+  function fmtPeso(v) {
+    if (v == null) return '—';
+    return (Math.round(v * 10) / 10).toString().replace('.', ',');
+  }
+  function fmtData(iso) {
+    const p = iso.split('-');
+    return p[2] + '/' + p[1] + '/' + p[0];
+  }
+
+  // ---- Toast ----
+  let toastTimer = null;
+  function avisar(msg) {
+    const t = el('toast');
+    t.textContent = msg;
+    t.classList.add('mostrar');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.classList.remove('mostrar'); }, 2400);
+  }
+
+  // ---- Confirmação genérica (modal) ----
+  function confirmar(mensagem, aoConfirmar, textoBotao) {
+    const fundo = el('modal-confirmar');
+    el('modal-confirmar-texto').textContent = mensagem;
+    el('modal-confirmar-ok').textContent = textoBotao || 'Confirmar';
+    fundo.classList.add('ativo');
+    const ok = el('modal-confirmar-ok');
+    const cancelar = el('modal-confirmar-cancelar');
+    function limpar() {
+      fundo.classList.remove('ativo');
+      ok.onclick = null;
+      cancelar.onclick = null;
+    }
+    ok.onclick = function () { limpar(); aoConfirmar(); };
+    cancelar.onclick = function () { limpar(); };
+  }
+
+  // ---- Navegação ----
+  function navegarPara(tela, params) {
+    telaAtual = tela;
+    document.querySelectorAll('.tela').forEach(function (t) { t.classList.remove('ativa'); });
+    document.querySelectorAll('.nav-item').forEach(function (b) { b.classList.remove('ativo'); });
+    el('tela-' + tela).classList.add('ativa');
+    const navBtn = document.querySelector('.nav-item[data-tela="' + tela + '"]');
+    if (navBtn) navBtn.classList.add('ativo');
+    window.scrollTo(0, 0);
+
+    if (tela === 'semana') renderSemana();
+    else if (tela === 'treino') renderTreino(params && params.diaId != null ? params.diaId : diaEmVisualizacao);
+    else if (tela === 'aerobico') Aerobico.render();
+    else if (tela === 'progresso') renderProgresso();
+  }
+
+  function abrirDia(diaId) {
+    diaEmVisualizacao = diaId;
+    navegarPara('treino', { diaId: diaId });
+  }
+
+  function proximoDiaPendente() {
+    const dias = CATALOGO.dias;
+    for (let i = 0; i < dias.length; i++) {
+      if (!Dados.diaConcluidoNestaSemana(dias[i].id)) return dias[i].id;
+    }
+    return dias[0].id;
+  }
+
+  // ---- Tela Semana ----
+  function renderSemana() {
+    const e = Dados.getEstado();
+    el('semana-numero').textContent = 'SEMANA ' + e.semanaAtual;
+    el('semana-desde').textContent = 'iniciada em ' + fmtData(e.semanaIniciadaEm);
+
+    const feitos = Dados.diasConcluidosNaSemana();
+    const total = CATALOGO.dias.length;
+    el('semana-progresso-barra').style.width = (feitos / total * 100) + '%';
+    el('semana-progresso-legenda').textContent = feitos + '/' + total + ' treinos concluídos';
+
+    const grade = el('grade-dias');
+    grade.innerHTML = '';
+    CATALOGO.dias.forEach(function (dia) {
+      const concluido = Dados.diaConcluidoNestaSemana(dia.id);
+      const prog = Dados.progressoDia(dia.id);
+      const btn = document.createElement('button');
+      btn.className = 'dia-card' + (concluido ? ' concluido' : '');
+      btn.innerHTML = (concluido ? '<span class="check">✔</span>' : '')
+        + '<div class="dia-num">DIA ' + dia.id + '</div>'
+        + '<div class="dia-foco">' + dia.foco + '</div>'
+        + '<div class="dia-status">' + (concluido ? 'Concluído' : prog.feitas + '/' + prog.total + ' séries') + '</div>';
+      btn.onclick = function () { abrirDia(dia.id); };
+      grade.appendChild(btn);
+    });
+
+    const btnConcluirSemana = el('btn-concluir-semana');
+    const podeConcluir = Dados.podeConcluirSemana();
+    btnConcluirSemana.disabled = !podeConcluir;
+    btnConcluirSemana.textContent = podeConcluir
+      ? 'Concluir Semana ' + e.semanaAtual
+      : 'Complete os 5 treinos para concluir a semana';
+
+    const hoje = Dados.hoje();
+    const seteDiasAtras = new Date();
+    seteDiasAtras.setDate(seteDiasAtras.getDate() - 6);
+    const inicioISO = seteDiasAtras.toISOString().slice(0, 10);
+    const resumo = Dados.resumoAerobicoEntre(inicioISO, hoje);
+    el('semana-aerobico-sessoes').textContent = resumo.sessoes;
+    el('semana-aerobico-minutos').textContent = resumo.minutos;
+    el('semana-aerobico-calorias').textContent = resumo.calorias;
+  }
+
+  function aoClicarConcluirSemana() {
+    if (!Dados.podeConcluirSemana()) return;
+    const e = Dados.getEstado();
+    confirmar('Concluir a Semana ' + e.semanaAtual + ' e começar a Semana ' + (e.semanaAtual + 1) + '?', function () {
+      Dados.concluirSemana();
+      avisar('Semana concluída! Bora pra próxima 💪');
+      renderSemana();
+    }, 'Concluir semana');
+  }
+
+  // ---- Tela Treino ----
+  function renderTreino(diaId) {
+    diaId = Number(diaId);
+    diaEmVisualizacao = diaId;
+    const dia = diaPorId(diaId);
+    if (!dia) return;
+
+    el('treino-dia-num').textContent = 'DIA ' + dia.id + ' DE 5';
+    el('treino-dia-foco').textContent = dia.foco.toUpperCase();
+    const prog = Dados.progressoDia(diaId);
+    el('treino-dia-sub').textContent = prog.feitas + ' de ' + prog.total + ' séries feitas nesta semana';
+
+    const lista = el('lista-exercicios');
+    lista.innerHTML = '';
+    dia.exercicios.forEach(function (exId) {
+      lista.appendChild(criarCardExercicio(diaId, exId));
+    });
+
+    const btnConcluir = el('btn-concluir-treino');
+    const jaConcluido = Dados.diaConcluidoNestaSemana(diaId);
+    btnConcluir.textContent = jaConcluido ? 'Treino já concluído nesta semana ✔' : 'Concluir treino do dia';
+    btnConcluir.disabled = jaConcluido;
+  }
+
+  function criarCardExercicio(diaId, exId) {
+    const info = CATALOGO.exercicios[exId];
+    const card = document.createElement('div');
+    card.className = 'card exercicio-card';
+
+    const pesoAtual = Dados.getPeso(diaId, exId);
+    const historico = Dados.historicoPorExercicio(exId).filter(function (p) { return p.dia === diaId; });
+    const pesoAnterior = historico.length ? historico[historico.length - 1].peso : null;
+    const passo = Dados.getEstado().passoPeso;
+
+    card.innerHTML =
+      '<div class="exercicio-cabecalho">'
+      + '  <button class="exercicio-thumb" data-acao="zoom"><img src="' + Dados.imagemExercicio(exId) + '" alt="' + info.nome + '"><span class="lupa">🔍</span></button>'
+      + '  <div class="exercicio-info">'
+      + '    <div class="nome">' + info.nome + '</div>'
+      + '    <div class="series-alvo">' + info.series + '× ' + info.reps + '</div>'
+      + '  </div>'
+      + '  <button class="icone-botao" data-acao="editar-exercicio" title="Editar exercício">✏️</button>'
+      + '</div>'
+      + '<div class="bloco-peso">'
+      + '  <button class="btn-peso" data-acao="menos">−</button>'
+      + '  <div>'
+      + '    <input class="valor-peso" data-acao="valor" type="number" inputmode="decimal" step="0.5" value="' + (pesoAtual != null ? pesoAtual : '') + '" placeholder="0">'
+      + '    <div class="valor-peso-unidade">kg</div>'
+      + '  </div>'
+      + '  <button class="btn-peso" data-acao="mais">+</button>'
+      + '</div>'
+      + '<div class="dica-peso" data-acao="dica"></div>'
+      + '<div class="serie-bolinhas" data-acao="bolinhas"></div>';
+
+    function pesoInput() { return card.querySelector('[data-acao="valor"]'); }
+
+    function atualizarDica() {
+      const el2 = card.querySelector('[data-acao="dica"]');
+      if (pesoAnterior == null) { el2.textContent = 'Primeiro registro deste exercício'; return; }
+      const atual = parseFloat(pesoInput().value) || 0;
+      const delta = Math.round((atual - pesoAnterior) * 10) / 10;
+      const sinal = delta > 0 ? '▲ +' + fmtPeso(delta) : (delta < 0 ? '▼ ' + fmtPeso(delta) : '＝ igual');
+      const classe = delta > 0 ? 'delta-pos' : (delta < 0 ? 'delta-neg' : '');
+      el2.innerHTML = 'Semana passada: ' + fmtPeso(pesoAnterior) + ' kg &nbsp;·&nbsp; <span class="' + classe + '">' + sinal + '</span>';
+    }
+
+    function salvarPeso() {
+      const v = parseFloat(pesoInput().value);
+      Dados.setPeso(diaId, exId, isNaN(v) ? null : v);
+      atualizarDica();
+    }
+
+    card.querySelector('[data-acao="menos"]').onclick = function () {
+      const v = (parseFloat(pesoInput().value) || 0) - passo;
+      pesoInput().value = Math.max(0, Math.round(v * 10) / 10);
+      salvarPeso();
+    };
+    card.querySelector('[data-acao="mais"]').onclick = function () {
+      const v = (parseFloat(pesoInput().value) || 0) + passo;
+      pesoInput().value = Math.round(v * 10) / 10;
+      salvarPeso();
+    };
+    pesoInput().oninput = salvarPeso;
+    card.querySelector('[data-acao="zoom"]').onclick = function () {
+      abrirZoom(Dados.imagemExercicio(exId), info.nome);
+    };
+    card.querySelector('[data-acao="editar-exercicio"]').onclick = function () {
+      abrirModalExercicio(diaId, exId);
+    };
+
+    function renderBolinhas() {
+      const cont = card.querySelector('[data-acao="bolinhas"]');
+      cont.innerHTML = '';
+      const feitas = Dados.getSeries(diaId, exId);
+      feitas.forEach(function (feita, i) {
+        const b = document.createElement('button');
+        b.className = 'bolinha-serie' + (feita ? ' feita' : '');
+        b.textContent = feita ? '✓' : (i + 1);
+        b.onclick = function () {
+          Dados.toggleSerie(diaId, exId, i);
+          renderBolinhas();
+          atualizarProgressoCabecalho();
+        };
+        cont.appendChild(b);
+      });
+    }
+
+    renderBolinhas();
+    atualizarDica();
+    return card;
+  }
+
+  function atualizarProgressoCabecalho() {
+    const diaId = diaEmVisualizacao;
+    const prog = Dados.progressoDia(diaId);
+    el('treino-dia-sub').textContent = prog.feitas + ' de ' + prog.total + ' séries feitas nesta semana';
+  }
+
+  function aoClicarConcluirTreino() {
+    const diaId = diaEmVisualizacao;
+    if (Dados.diaConcluidoNestaSemana(diaId)) return;
+    const dia = diaPorId(diaId);
+    const prog = Dados.progressoDia(diaId);
+    const mensagem = prog.feitas < prog.total
+      ? 'Ainda faltam séries para marcar (' + prog.feitas + '/' + prog.total + '). Concluir o Dia ' + dia.id + ' mesmo assim?'
+      : 'Concluir o Dia ' + dia.id + ' — ' + dia.foco + '?';
+    confirmar(mensagem, function () {
+      Dados.concluirDia(diaId);
+      avisar('Treino do Dia ' + dia.id + ' registrado!');
+      renderTreino(diaId);
+    }, 'Concluir treino');
+  }
+
+  // ---- Modal: adicionar/editar exercício ----
+  // A rotina muda com o tempo, então cada exercício pode ser renomeado, ter as
+  // séries/reps ajustadas, trocar de imagem (ilustração da biblioteca ou foto
+  // própria) ou ser removido do dia — e novos exercícios podem ser adicionados.
+  let modalExContexto = null; // { diaId, exId } — exId null = criando um novo
+  let modalExImagem = null;   // { tipo: 'padrao'|'biblioteca'|'foto', valor }
+
+  function abrirModalExercicio(diaId, exId) {
+    modalExContexto = { diaId: diaId, exId: exId };
+    const criando = !exId;
+    const info = exId ? CATALOGO.exercicios[exId] : null;
+
+    el('modal-exercicio-titulo').textContent = criando ? 'Adicionar exercício' : 'Editar exercício';
+    el('modal-ex-nome').value = info ? info.nome : '';
+    el('modal-ex-series').value = info ? info.series : 3;
+    el('modal-ex-reps').value = info ? info.reps : '10 a 12';
+    el('modal-ex-excluir').style.display = criando ? 'none' : 'block';
+
+    modalExImagem = (info && info.imagem) ? info.imagem : { tipo: 'padrao', valor: null };
+    preencherGridBibliotecaExercicio();
+    el('modal-ex-foto-input').value = '';
+    atualizarModoImagemExercicio();
+    el('modal-exercicio').classList.add('ativo');
+  }
+
+  function fecharModalExercicio() {
+    el('modal-exercicio').classList.remove('ativo');
+    modalExContexto = null;
+  }
+
+  function preencherGridBibliotecaExercicio() {
+    const grid = el('modal-ex-biblioteca-grid');
+    if (grid.dataset.preenchido) return;
+    grid.dataset.preenchido = '1';
+    Object.keys(CATALOGO_PADRAO.exercicios).forEach(function (id) {
+      const infoPadrao = CATALOGO_PADRAO.exercicios[id];
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn-secundario';
+      btn.style.padding = '4px';
+      btn.dataset.id = id;
+      btn.innerHTML = '<img src="./img/ex/' + id + '.svg" alt="' + infoPadrao.nome + '" style="width:100%; height:52px; object-fit:contain; display:block;">'
+        + '<div style="font-size:10px; margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">' + infoPadrao.nome + '</div>';
+      btn.onclick = function () {
+        modalExImagem = { tipo: 'biblioteca', valor: id };
+        marcarSelecaoGridBiblioteca();
+      };
+      grid.appendChild(btn);
+    });
+  }
+
+  function marcarSelecaoGridBiblioteca() {
+    const grid = el('modal-ex-biblioteca-grid');
+    Array.from(grid.children).forEach(function (btn) {
+      const selecionado = modalExImagem.tipo === 'biblioteca' && btn.dataset.id === modalExImagem.valor;
+      btn.style.borderColor = selecionado ? 'var(--laranja)' : 'var(--borda)';
+    });
+  }
+
+  function atualizarModoImagemExercicio() {
+    Array.from(el('modal-ex-imagem-opcoes').children).forEach(function (chip) {
+      chip.classList.toggle('selecionado', chip.dataset.modo === modalExImagem.tipo);
+    });
+    el('modal-ex-biblioteca-grid').style.display = modalExImagem.tipo === 'biblioteca' ? 'grid' : 'none';
+    el('modal-ex-foto-area').style.display = modalExImagem.tipo === 'foto' ? 'block' : 'none';
+    marcarSelecaoGridBiblioteca();
+    const preview = el('modal-ex-foto-preview');
+    if (modalExImagem.tipo === 'foto' && modalExImagem.valor) {
+      preview.src = modalExImagem.valor;
+      preview.style.display = 'block';
+    } else {
+      preview.style.display = 'none';
+    }
+  }
+
+  // Reduz a foto escolhida (câmera/galeria costuma gerar arquivos enormes)
+  // antes de guardar como data URL no localStorage — senão a cota do
+  // navegador esgota rápido.
+  function redimensionarImagem(dataUrlOriginal, ladoMaximo, aoTerminar) {
+    const img = new Image();
+    img.onload = function () {
+      const escala = Math.min(1, ladoMaximo / Math.max(img.width, img.height));
+      const w = Math.max(1, Math.round(img.width * escala));
+      const h = Math.max(1, Math.round(img.height * escala));
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      aoTerminar(canvas.toDataURL('image/jpeg', 0.82));
+    };
+    img.onerror = function () { avisar('Não foi possível ler essa imagem.'); };
+    img.src = dataUrlOriginal;
+  }
+
+  function configurarModalExercicio() {
+    Array.from(el('modal-ex-imagem-opcoes').children).forEach(function (chip) {
+      chip.onclick = function () {
+        const manterValor = modalExImagem.tipo === chip.dataset.modo;
+        modalExImagem = { tipo: chip.dataset.modo, valor: manterValor ? modalExImagem.valor : null };
+        atualizarModoImagemExercicio();
+      };
+    });
+
+    el('modal-ex-foto-input').onchange = function (e) {
+      const arquivo = e.target.files && e.target.files[0];
+      if (!arquivo) return;
+      const leitor = new FileReader();
+      leitor.onload = function () {
+        redimensionarImagem(leitor.result, 480, function (dataUrlReduzida) {
+          modalExImagem = { tipo: 'foto', valor: dataUrlReduzida };
+          atualizarModoImagemExercicio();
+        });
+      };
+      leitor.readAsDataURL(arquivo);
+    };
+
+    el('modal-ex-salvar').onclick = function () {
+      const nome = el('modal-ex-nome').value.trim();
+      if (!nome) { avisar('Informe o nome do exercício.'); return; }
+      const series = parseInt(el('modal-ex-series').value, 10) || 3;
+      const reps = el('modal-ex-reps').value.trim() || '10 a 12';
+      const ctx = modalExContexto;
+      if (ctx.exId) {
+        Dados.editarExercicio(ctx.exId, { nome: nome, series: series, reps: reps, imagem: modalExImagem });
+        avisar('Exercício atualizado.');
+      } else {
+        Dados.adicionarExercicio(ctx.diaId, { nome: nome, series: series, reps: reps, imagem: modalExImagem });
+        avisar('Exercício adicionado ao treino.');
+      }
+      fecharModalExercicio();
+      renderTreino(ctx.diaId);
+    };
+
+    el('modal-ex-excluir').onclick = function () {
+      const ctx = modalExContexto;
+      const nomeEx = CATALOGO.exercicios[ctx.exId] ? CATALOGO.exercicios[ctx.exId].nome : 'este exercício';
+      confirmar('Remover "' + nomeEx + '" deste treino? O histórico de pesos já registrado não será apagado.', function () {
+        Dados.removerExercicioDoDia(ctx.diaId, ctx.exId);
+        fecharModalExercicio();
+        renderTreino(ctx.diaId);
+        avisar('Exercício removido do treino.');
+      }, 'Remover');
+    };
+
+    el('modal-ex-cancelar').onclick = fecharModalExercicio;
+  }
+
+  // ---- Zoom de imagem ----
+  let zoomEscala = 1;
+  function abrirZoom(src, titulo) {
+    const overlay = el('zoom-overlay');
+    const img = el('zoom-img');
+    img.src = src;
+    img.style.transform = 'scale(1)';
+    zoomEscala = 1;
+    el('zoom-legenda').textContent = titulo + ' — toque duas vezes ou belisque para ampliar';
+    overlay.classList.add('ativo');
+  }
+  function fecharZoom() {
+    el('zoom-overlay').classList.remove('ativo');
+  }
+  function configurarZoomGestos() {
+    const overlay = el('zoom-overlay');
+    const img = el('zoom-img');
+    overlay.addEventListener('click', function (e) {
+      if (e.target === overlay) fecharZoom();
+    });
+    img.addEventListener('dblclick', function () {
+      zoomEscala = zoomEscala > 1 ? 1 : 2.4;
+      img.style.transform = 'scale(' + zoomEscala + ')';
+    });
+    // Pinça (pinch-to-zoom) simples com dois toques.
+    let distanciaInicial = null;
+    let escalaInicial = 1;
+    img.addEventListener('touchstart', function (e) {
+      if (e.touches.length === 2) {
+        distanciaInicial = distanciaEntreToques(e.touches);
+        escalaInicial = zoomEscala;
+      }
+    });
+    img.addEventListener('touchmove', function (e) {
+      if (e.touches.length === 2 && distanciaInicial) {
+        const nova = distanciaEntreToques(e.touches);
+        zoomEscala = Math.min(4, Math.max(1, escalaInicial * (nova / distanciaInicial)));
+        img.style.transform = 'scale(' + zoomEscala + ')';
+      }
+    });
+  }
+  function distanciaEntreToques(touches) {
+    const dx = touches[0].clientX - touches[1].clientX;
+    const dy = touches[0].clientY - touches[1].clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  // ---- Tela Progresso ----
+  function renderProgresso() {
+    // A lista de exercícios é reconstruída a cada visita (não é cara: no máximo
+    // algumas dezenas de itens) porque o catálogo é editável — exercícios podem
+    // ter sido adicionados/removidos/renomeados desde a última vez.
+    const seletor = el('seletor-exercicio-progresso');
+    const valorAnterior = seletor.value;
+    seletor.innerHTML = '';
+    Object.keys(CATALOGO.exercicios).forEach(function (id) {
+      const opt = document.createElement('option');
+      opt.value = id;
+      opt.textContent = CATALOGO.exercicios[id].nome;
+      seletor.appendChild(opt);
+    });
+    if (Object.prototype.hasOwnProperty.call(CATALOGO.exercicios, valorAnterior)) seletor.value = valorAnterior;
+    seletor.onchange = renderGraficoProgresso;
+    renderGraficoProgresso();
+
+    const e = Dados.getEstado();
+    const listaSemanas = el('lista-semanas-concluidas');
+    listaSemanas.innerHTML = '';
+    if (!e.historico.length) {
+      listaSemanas.innerHTML = '<li>Nenhum treino concluído ainda.</li>';
+    } else {
+      const porSemanaEDia = {};
+      e.historico.forEach(function (h) {
+        const chave = h.semana + ':' + h.dia;
+        porSemanaEDia[chave] = h;
+      });
+      Object.keys(porSemanaEDia).sort().reverse().slice(0, 20).forEach(function (chave) {
+        const h = porSemanaEDia[chave];
+        const dia = diaPorId(h.dia);
+        const li = document.createElement('li');
+        li.innerHTML = '<span>Semana ' + h.semana + ' · Dia ' + h.dia + ' (' + (dia ? dia.foco : '') + ')</span><span>' + fmtData(h.data) + '</span>';
+        listaSemanas.appendChild(li);
+      });
+    }
+  }
+
+  function renderGraficoProgresso() {
+    const exId = el('seletor-exercicio-progresso').value;
+    const pontos = Dados.historicoPorExercicio(exId).sort(function (a, b) { return a.semana - b.semana; });
+    const svg = el('grafico-progresso');
+    if (pontos.length < 2) {
+      svg.innerHTML = '<text x="10" y="90" fill="#9a9aa2" font-size="13">Registre pesos em pelo menos 2 semanas para ver o gráfico.</text>';
+      return;
+    }
+    const largura = 300, altura = 160, margem = 20;
+    const pesos = pontos.map(function (p) { return p.peso; });
+    const min = Math.min.apply(null, pesos), max = Math.max.apply(null, pesos);
+    const faixa = max - min || 1;
+    const passoX = (largura - margem * 2) / (pontos.length - 1);
+    const coords = pontos.map(function (p, i) {
+      const x = margem + i * passoX;
+      const y = altura - margem - ((p.peso - min) / faixa) * (altura - margem * 2);
+      return [x, y];
+    });
+    const linha = coords.map(function (c, i) { return (i === 0 ? 'M' : 'L') + c[0] + ',' + c[1]; }).join(' ');
+    const pontosSvg = coords.map(function (c, i) {
+      return '<circle cx="' + c[0] + '" cy="' + c[1] + '" r="3.5" fill="#ff5a1f"></circle>'
+        + '<text x="' + c[0] + '" y="' + (c[1] - 10) + '" font-size="10" fill="#f2f2f2" text-anchor="middle">' + fmtPeso(pontos[i].peso) + '</text>';
+    }).join('');
+    svg.setAttribute('viewBox', '0 0 ' + largura + ' ' + altura);
+    svg.innerHTML = '<path d="' + linha + '" fill="none" stroke="#ff5a1f" stroke-width="2.5"/>' + pontosSvg;
+  }
+
+  // ---- Ajustes / Backup ----
+  function exportarBackup() {
+    const json = Dados.exportarJSON();
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const dataArq = Dados.hoje();
+    a.href = url;
+    a.download = 'backup-treinos-' + dataArq + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+    avisar('Backup exportado.');
+  }
+
+  function importarBackup(arquivo) {
+    const leitor = new FileReader();
+    leitor.onload = function () {
+      try {
+        Dados.importarJSON(leitor.result);
+        avisar('Backup importado com sucesso.');
+        renderSemana();
+        renderProgresso();
+      } catch (e) {
+        console.error(e);
+        avisar('Arquivo inválido. Verifique o backup.');
+      }
+    };
+    leitor.readAsText(arquivo);
+  }
+
+  function aoClicarApagarTudo() {
+    confirmar('Apagar TODOS os dados do app (pesos, semanas, histórico e aeróbicos)? Isso não pode ser desfeito.', function () {
+      confirmar('Tem certeza mesmo? Essa é a última confirmação.', function () {
+        Dados.apagarTudo();
+        avisar('Todos os dados foram apagados.');
+        navegarPara('semana');
+      }, 'Sim, apagar tudo');
+    }, 'Continuar');
+  }
+
+  // ---- Inicialização ----
+  function init() {
+    document.querySelectorAll('.nav-item').forEach(function (btn) {
+      btn.onclick = function () {
+        if (btn.dataset.tela === 'treino') abrirDia(proximoDiaPendente());
+        else navegarPara(btn.dataset.tela);
+      };
+    });
+    el('btn-concluir-semana').onclick = aoClicarConcluirSemana;
+    el('btn-concluir-treino').onclick = aoClicarConcluirTreino;
+    el('btn-voltar-treino').onclick = function () { navegarPara('semana'); };
+    el('zoom-fechar').onclick = fecharZoom;
+    el('btn-exportar-backup').onclick = exportarBackup;
+    el('input-importar-backup').onchange = function (e) {
+      if (e.target.files && e.target.files[0]) importarBackup(e.target.files[0]);
+      e.target.value = '';
+    };
+    el('btn-apagar-tudo').onclick = aoClicarApagarTudo;
+    el('input-passo-peso').value = Dados.getEstado().passoPeso;
+    el('input-passo-peso').onchange = function (e) {
+      const v = parseFloat(e.target.value) || 2.5;
+      Dados.ajustarPassoPeso(v);
+      avisar('Incremento de peso ajustado para ' + fmtPeso(v) + ' kg.');
+    };
+    el('input-semana-manual').value = Dados.getEstado().semanaAtual;
+    el('btn-ajustar-semana').onclick = function () {
+      const v = parseInt(el('input-semana-manual').value, 10);
+      if (v >= 1) {
+        Dados.ajustarSemanaManualmente(v);
+        avisar('Semana ajustada para ' + v + '.');
+        renderSemana();
+      }
+    };
+
+    configurarZoomGestos();
+    configurarModalExercicio();
+    el('btn-adicionar-exercicio').onclick = function () { abrirModalExercicio(diaEmVisualizacao, null); };
+    Aerobico.init();
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('./sw.js').catch(function (e) { console.warn('SW não registrado:', e); });
+      });
+    }
+
+    navegarPara('semana');
+  }
+
+  return {
+    init: init,
+    navegarPara: navegarPara,
+    abrirDia: abrirDia,
+    abrirZoom: abrirZoom,
+    fecharZoom: fecharZoom,
+    avisar: avisar,
+    confirmar: confirmar,
+    fmtPeso: fmtPeso,
+    fmtData: fmtData,
+    proximoDiaPendente: proximoDiaPendente
+  };
+})();
+
+document.addEventListener('DOMContentLoaded', App.init);

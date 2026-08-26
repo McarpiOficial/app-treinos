@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Meus Treinos</title>
+<meta name="theme-color" content="#0b0b0d">
+<meta name="description" content="App pessoal para acompanhar treinos de musculação e aeróbicos, com registro de carga e evolução semanal.">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./img/icone-192.png">
+<link rel="apple-touch-icon" href="./img/icone-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Treinos">
+<link rel="stylesheet" href="./css/app.css">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ===== Tela: Semana ===== -->
+  <section id="tela-semana" class="tela ativa">
+    <div class="topo"><h1>Meus Treinos</h1></div>
+
+    <div class="card card-semana">
+      <div class="numero" id="semana-numero">SEMANA 1</div>
+      <div class="legenda" id="semana-desde">iniciada em --/--/----</div>
+      <div class="barra-progresso"><div id="semana-progresso-barra" style="width:0%"></div></div>
+      <div class="barra-progresso-legenda"><span id="semana-progresso-legenda">0/5 treinos concluídos</span></div>
+    </div>
+
+    <div class="grade-dias" id="grade-dias"></div>
+
+    <button class="btn-principal" id="btn-concluir-semana" disabled>Complete os 5 treinos para concluir a semana</button>
+
+    <div class="card" style="margin-top:14px;">
+      <div class="campo-label" style="margin-top:0;">AERÓBICO NOS ÚLTIMOS 7 DIAS</div>
+      <div class="resumo-mini">
+        <div><div class="valor" id="semana-aerobico-sessoes">0</div><div class="rotulo">sessões</div></div>
+        <div><div class="valor" id="semana-aerobico-minutos">0</div><div class="rotulo">minutos</div></div>
+        <div><div class="valor" id="semana-aerobico-calorias">0</div><div class="rotulo">kcal</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Tela: Treino do dia ===== -->
+  <section id="tela-treino" class="tela">
+    <div class="topo">
+      <button class="btn-voltar" id="btn-voltar-treino">‹</button>
+      <h1>Treino</h1>
+    </div>
+
+    <div class="cabecalho-treino">
+      <div class="dia-num" id="treino-dia-num">DIA 1 DE 5</div>
+      <h2 id="treino-dia-foco">PEITO E TRÍCEPS</h2>
+      <div class="sub" id="treino-dia-sub">0 de 0 séries feitas nesta semana</div>
+    </div>
+
+    <div id="lista-exercicios"></div>
+
+    <button type="button" class="btn-secundario" id="btn-adicionar-exercicio">+ Adicionar exercício a este dia</button>
+
+    <div class="rodape-treino">
+      <button class="btn-principal" id="btn-concluir-treino">Concluir treino do dia</button>
+    </div>
+  </section>
+
+  <!-- ===== Tela: Aeróbico ===== -->
+  <section id="tela-aerobico" class="tela">
+    <div class="topo"><h1>Aeróbico</h1></div>
+
+    <div class="resumo-linha">
+      <div class="card"><div class="valor" id="resumo-aerobico-sessoes">0</div><div class="rotulo">sessões (7d)</div></div>
+      <div class="card"><div class="valor" id="resumo-aerobico-minutos">0</div><div class="rotulo">minutos (7d)</div></div>
+      <div class="card"><div class="valor" id="resumo-aerobico-calorias">0</div><div class="rotulo">kcal (7d)</div></div>
+    </div>
+
+    <form id="form-aerobico" class="card">
+      <h3 id="titulo-form-aerobico" style="margin:0 0 4px;">Registrar aeróbico</h3>
+
+      <div class="campo-label">TIPO DE TREINO</div>
+      <div class="chips" id="chips-tipo-aerobico"></div>
+      <input class="campo-input" id="input-tipo-outro" placeholder="Qual? (ex.: Dança, Remo...)" style="display:none; margin-top:8px;">
+
+      <div class="campo-label">TEMPO</div>
+      <div class="chips" id="chips-tempo-aerobico"></div>
+      <input class="campo-input" id="input-minutos-manual" type="number" inputmode="numeric" placeholder="Outro tempo (min)" style="margin-top:8px;">
+
+      <div class="campo-label">CALORIAS PERDIDAS</div>
+      <input class="campo-input" id="input-calorias-aerobico" type="number" inputmode="numeric" placeholder="Ex.: 450">
+
+      <div class="campo-label">DATA</div>
+      <input class="campo-input" id="input-data-aerobico" type="date">
+
+      <div class="modal-linha-botoes">
+        <button type="button" class="btn-secundario" id="btn-cancelar-edicao-aerobico" style="display:none;">Cancelar</button>
+        <button type="submit" class="btn-principal" id="btn-salvar-aerobico" style="margin-top:0;">Registrar</button>
+      </div>
+    </form>
+
+    <div id="lista-aerobicos"></div>
+  </section>
+
+  <!-- ===== Tela: Progresso ===== -->
+  <section id="tela-progresso" class="tela">
+    <div class="topo"><h1>Progresso</h1></div>
+
+    <div class="card">
+      <div class="campo-label" style="margin-top:0;">EVOLUÇÃO DE CARGA</div>
+      <select class="campo-input seletor-exercicio" id="seletor-exercicio-progresso"></select>
+      <svg class="grafico-svg" id="grafico-progresso" viewBox="0 0 300 160"></svg>
+    </div>
+
+    <div class="card">
+      <div class="campo-label" style="margin-top:0;">TREINOS CONCLUÍDOS RECENTEMENTE</div>
+      <ul class="lista-simples" id="lista-semanas-concluidas"></ul>
+    </div>
+
+    <div class="card">
+      <div class="campo-label" style="margin-top:0;">AJUSTES</div>
+
+      <div style="display:flex; gap:10px; align-items:center; margin-bottom:12px;">
+        <div style="flex:1;">
+          <div class="campo-label" style="margin-top:0;">Incremento do peso (kg)</div>
+          <input class="campo-input" id="input-passo-peso" type="number" step="0.5" min="0.5">
+        </div>
+      </div>
+
+      <div style="display:flex; gap:10px; align-items:flex-end; margin-bottom:16px;">
+        <div style="flex:1;">
+          <div class="campo-label" style="margin-top:0;">Número da semana atual</div>
+          <input class="campo-input" id="input-semana-manual" type="number" min="1">
+        </div>
+        <button class="btn-secundario" id="btn-ajustar-semana" style="width:auto; padding:12px 16px;">Ajustar</button>
+      </div>
+
+      <div class="campo-label" style="margin-top:0;">BACKUP DOS DADOS</div>
+      <button class="btn-secundario" id="btn-exportar-backup">Exportar backup (.json)</button>
+      <label class="btn-secundario" style="display:block; text-align:center; margin-top:10px; cursor:pointer;">
+        Importar backup (.json)
+        <input type="file" id="input-importar-backup" accept="application/json,.json" style="display:none;">
+      </label>
+
+      <div class="campo-label">ZONA DE RISCO</div>
+      <button class="btn-secundario btn-perigo" id="btn-apagar-tudo">Apagar todos os dados</button>
+    </div>
+  </section>
+
+</div>
+
+<!-- ===== Navegação inferior ===== -->
+<nav class="nav-inferior">
+  <button class="nav-item" data-tela="semana"><span class="icone">📅</span>Semana</button>
+  <button class="nav-item" data-tela="treino"><span class="icone">🏋️</span>Treino</button>
+  <button class="nav-item" data-tela="aerobico"><span class="icone">🏃</span>Aeróbico</button>
+  <button class="nav-item" data-tela="progresso"><span class="icone">📈</span>Progresso</button>
+</nav>
+
+<!-- ===== Overlay: zoom de imagem do exercício ===== -->
+<div class="zoom-overlay" id="zoom-overlay">
+  <button class="zoom-fechar" id="zoom-fechar">✕</button>
+  <img id="zoom-img" src="" alt="Exercício ampliado">
+  <div class="zoom-legenda" id="zoom-legenda"></div>
+</div>
+
+<!-- ===== Modal: adicionar/editar exercício ===== -->
+<div class="modal-fundo" id="modal-exercicio">
+  <div class="modal-conteudo" style="max-height:85vh; overflow-y:auto;">
+    <h3 id="modal-exercicio-titulo">Editar exercício</h3>
+
+    <div class="campo-label" style="margin-top:0;">NOME</div>
+    <input class="campo-input" id="modal-ex-nome" placeholder="Ex.: Crucifixo Máquina">
+
+    <div style="display:flex; gap:10px;">
+      <div style="flex:1;">
+        <div class="campo-label">SÉRIES</div>
+        <input class="campo-input" id="modal-ex-series" type="number" min="1">
+      </div>
+      <div style="flex:1;">
+        <div class="campo-label">REPETIÇÕES</div>
+        <input class="campo-input" id="modal-ex-reps" placeholder="Ex.: 10 a 12">
+      </div>
+    </div>
+
+    <div class="campo-label">IMAGEM</div>
+    <div class="chips" id="modal-ex-imagem-opcoes">
+      <button type="button" class="chip" data-modo="padrao">Padrão</button>
+      <button type="button" class="chip" data-modo="biblioteca">Da biblioteca</button>
+      <button type="button" class="chip" data-modo="foto">Usar foto</button>
+    </div>
+    <div id="modal-ex-biblioteca-grid" style="display:none; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:10px;"></div>
+    <div id="modal-ex-foto-area" style="display:none; margin-top:10px;">
+      <input class="campo-input" type="file" id="modal-ex-foto-input" accept="image/*">
+      <img id="modal-ex-foto-preview" style="max-width:100%; margin-top:8px; border-radius:10px; display:none;" alt="Pré-visualização da foto">
+    </div>
+
+    <div class="modal-linha-botoes">
+      <button type="button" class="btn-secundario btn-perigo" id="modal-ex-excluir" style="display:none;">Excluir deste dia</button>
+      <button type="button" class="btn-principal" id="modal-ex-salvar" style="margin-top:0;">Salvar</button>
+    </div>
+    <button type="button" class="btn-secundario" id="modal-ex-cancelar" style="margin-top:10px;">Cancelar</button>
+  </div>
+</div>
+
+<!-- ===== Modal: confirmação genérica ===== -->
+<div class="modal-fundo" id="modal-confirmar">
+  <div class="modal-conteudo">
+    <h3>Confirmar</h3>
+    <p id="modal-confirmar-texto" style="color:var(--texto-fraco); font-size:14px;"></p>
+    <div class="modal-linha-botoes">
+      <button class="btn-secundario" id="modal-confirmar-cancelar">Cancelar</button>
+      <button class="btn-principal" id="modal-confirmar-ok" style="margin-top:0;">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Toast ===== -->
+<div class="toast" id="toast"></div>
+
+<script src="./js/exercicios.js"></script>
+<script src="./js/dados.js"></script>
+<script src="./js/aerobico.js"></script>
+<script src="./js/app.js"></script>
+</body>
+</html>
