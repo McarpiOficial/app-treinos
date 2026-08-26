@@ -2,7 +2,7 @@
 // offline depois (dados continuam só no localStorage, isso aqui é só o "casco"
 // do app: HTML/CSS/JS/imagens). Caminhos relativos para funcionar também
 // dentro de uma subpasta no GitHub Pages (ex.: /app-treinos/).
-const CACHE = 'treinos-cache-v2';
+const CACHE = 'treinos-cache-v3';
 
 const ARQUIVOS = [
   './',
@@ -38,6 +38,32 @@ self.addEventListener('activate', function (event) {
 
 self.addEventListener('fetch', function (event) {
   if (event.request.method !== 'GET') return;
+
+  const url = new URL(event.request.url);
+  const ehCodigo = event.request.mode === 'navigate'
+    || /\.(?:html|js|css|webmanifest)$/.test(url.pathname);
+
+  if (ehCodigo) {
+    // Código: rede primeiro, para que uma versão nova do app apareça já na
+    // primeira abertura. Sem internet, cai para o cache e continua funcionando.
+    event.respondWith(
+      fetch(event.request).then(function (respostaRede) {
+        const copia = respostaRede.clone();
+        caches.open(CACHE).then(function (cache) { cache.put(event.request, copia); });
+        return respostaRede;
+      }).catch(function () {
+        return caches.match(event.request).then(function (cacheado) {
+          if (cacheado) return cacheado;
+          if (event.request.mode === 'navigate') return caches.match('./index.html');
+        });
+      })
+    );
+    return;
+  }
+
+  // Fotos e ícones: cache primeiro (não mudam e são o grosso do peso).
+  // As fotos dos exercícios não vão no precache — entram no cache conforme
+  // você abre os treinos, o que mantém a instalação leve.
   event.respondWith(
     caches.match(event.request).then(function (respostaCache) {
       if (respostaCache) return respostaCache;
@@ -45,8 +71,6 @@ self.addEventListener('fetch', function (event) {
         const copia = respostaRede.clone();
         caches.open(CACHE).then(function (cache) { cache.put(event.request, copia); });
         return respostaRede;
-      }).catch(function () {
-        if (event.request.mode === 'navigate') return caches.match('./index.html');
       });
     })
   );
