@@ -2,6 +2,11 @@
 // Progresso. Tudo renderizado via JS puro (sem framework), lendo/gravando pelo
 // módulo Dados (js/dados.js) — que é a única fonte de verdade dos dados salvos.
 const App = (function () {
+  // Mostrada em Progresso > Ajustes, para o usuário conseguir CONFIRMAR pelo
+  // olho que uma atualização chegou, sem depender de nenhum mecanismo
+  // automático. Bumpar junto com CACHE em sw.js a cada mudança publicada.
+  const VERSAO_APP = 'v7';
+
   let telaAtual = 'semana';
   let diaEmVisualizacao = null;
   // Toque que virou arraste (pela alça ou por segurar o card) não deve também
@@ -96,8 +101,7 @@ const App = (function () {
       card.className = 'dia-card' + (concluido ? ' concluido' : '');
       card.dataset.diaId = dia.id;
       card.innerHTML =
-        '<span class="dia-pegar" data-acao="arrastar" title="Arraste para reordenar">⠿</span>'
-        + (concluido ? '<span class="check">✔</span>' : '')
+        (concluido ? '<span class="check">✔</span>' : '')
         + '<div class="dia-num">DIA ' + (indice + 1) + '</div>'
         + '<div class="dia-foco">' + dia.foco + '</div>'
         + '<div class="dia-status">' + (concluido ? 'Concluído' : prog.feitas + '/' + prog.total + ' séries') + '</div>'
@@ -106,7 +110,6 @@ const App = (function () {
       card.onclick = function (ev) {
         if (ignorarProximoCliqueDia) { ignorarProximoCliqueDia = false; return; }
         if (ev.target.closest('[data-acao="editar-dia"]')) { abrirModalDia(dia.id); return; }
-        if (ev.target.closest('[data-acao="arrastar"]')) return;
         abrirDia(dia.id);
       };
       grade.appendChild(card);
@@ -130,12 +133,16 @@ const App = (function () {
   }
 
   // ---- Reordenar treinos arrastando ----
-  // O arraste começa só pela alça (⠿), que tem touch-action:none. Fosse o card
-  // inteiro, o navegador rolaria a página junto no celular.
+  // Segurar em qualquer parte do card, por um instante, inicia o arraste —
+  // ver aoPressionar. Enquanto arrasta, o card vira position:fixed (sai do
+  // fluxo do grid) e segue o dedo; o card sob o dedo recebe um destaque
+  // (dia-card-alvo) indicando onde ele vai entrar. A troca de fato só é
+  // aplicada ao soltar (ver aoSoltar) — nada se move no DOM durante o arraste.
   //
-  // Enquanto arrasta, o card vira position:fixed e sai do fluxo — os outros
-  // se reacomodam sozinhos, mostrando onde ele vai cair. A ordem final é lida
-  // do próprio DOM ao soltar.
+  // A página fica com o scroll travado (classe trava-scroll no html) do
+  // início do arraste até soltar: sem isso, uma tela que não cabe inteira no
+  // aparelho pode rolar sozinha por baixo do dedo bem no meio do gesto,
+  // fazendo o arraste parecer que "não funcionou".
   function configurarArrasteDias() {
     const grade = el('grade-dias');
     const LIMIAR_MOVIMENTO = 10; // px de tolerância antes de considerar "é rolagem, não arraste"
@@ -171,6 +178,7 @@ const App = (function () {
       card.style.left = r.left + 'px';
       card.style.top = r.top + 'px';
       card.classList.add('arrastando');
+      document.documentElement.classList.add('trava-scroll');
       arrastando = true;
       ignorarProximoCliqueDia = true; // o toque que vira arraste não deve também abrir o dia
       // Vibração é só uma confirmação tátil; alguns navegadores recusam a
@@ -183,15 +191,9 @@ const App = (function () {
       const alvo = ev.target.closest('.dia-card');
       if (!alvo || alvo.parentNode !== grade || grade.children.length < 2) return;
 
-      if (ev.target.closest('[data-acao="arrastar"]')) {
-        ev.preventDefault();
-        iniciarArraste(alvo, ev.clientX, ev.clientY);
-        return;
-      }
-
-      // Segurar em qualquer parte do card também arrasta, depois de um instante
-      // — evita ter que acertar o ícone pequeno com o dedo. Sem preventDefault
-      // aqui: se o gesto for na verdade uma rolagem, o navegador segue livre.
+      // Segurar em qualquer parte do card arrasta, depois de um instante. Sem
+      // preventDefault aqui: se o gesto for na verdade uma rolagem, o
+      // navegador segue livre até o limiar de movimento cancelar a espera.
       pressCard = alvo;
       pressX = ev.clientX;
       pressY = ev.clientY;
@@ -237,6 +239,7 @@ const App = (function () {
       arrastando = false;
       card.classList.remove('arrastando');
       card.removeAttribute('style');
+      document.documentElement.classList.remove('trava-scroll');
 
       const destino = alvoAtual;
       limparDestaque();
@@ -898,15 +901,49 @@ const App = (function () {
       });
 
       window.addEventListener('load', function () {
-        navigator.serviceWorker.register('./sw.js').then(function (registro) {
-          // Procura atualização assim que abre e também ao voltar para o app.
+        // updateViaCache:'none' evita que o próprio navegador sirva um sw.js
+        // requisitado do cache HTTP local ao checar atualização.
+        navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).then(function (registro) {
+          // Procura atualização ao abrir, ao voltar pro app (troca de aba/app
+          // recente) e também quando a página volta de um estado congelado
+          // pelo navegador (pageshow cobre isso; visibilitychange nem sempre).
           registro.update().catch(function () {});
           document.addEventListener('visibilitychange', function () {
             if (!document.hidden) registro.update().catch(function () {});
           });
+          window.addEventListener('pageshow', function () { registro.update().catch(function () {}); });
         }).catch(function (e) { console.warn('SW não registrado:', e); });
       });
     }
+
+    // Botão manual em Ajustes: não depende de nenhum mecanismo automático —
+    // apaga o service worker e os caches deste app e recarrega do zero.
+    // É a garantia definitiva de estar na versão mais recente.
+    const elVersao = el('versao-app');
+    if (elVersao) elVersao.textContent = 'versão ' + VERSAO_APP;
+
+    el('btn-forcar-atualizacao').onclick = function () {
+      confirmar(
+        'Isso descarta a cópia do app guardada neste aparelho e busca a versão mais recente pela internet. Seus treinos, pesos e aeróbicos não são afetados — ficam guardados em outro lugar.',
+        function () {
+          const limpezas = [];
+          if ('serviceWorker' in navigator) {
+            limpezas.push(navigator.serviceWorker.getRegistrations().then(function (rs) {
+              return Promise.all(rs.map(function (r) { return r.unregister(); }));
+            }));
+          }
+          if ('caches' in window) {
+            limpezas.push(caches.keys().then(function (ks) {
+              return Promise.all(ks.map(function (k) { return caches.delete(k); }));
+            }));
+          }
+          Promise.all(limpezas).catch(function () { /* segue mesmo se algo falhar */ }).then(function () {
+            window.location.href = window.location.pathname + '?att=' + Date.now();
+          });
+        },
+        'Atualizar agora'
+      );
+    };
 
     navegarPara('semana');
   }

@@ -15,10 +15,11 @@ dados ficam salvos só no aparelho** (localStorage), sem servidor e sem login.
   renomeia e exclui (✏️ no card do dia, ou "+ Novo dia de treino"). Um dia
   criado funciona igual aos originais: recebe exercícios, registra carga e
   conta para o fechamento da semana — então dá para passar de 5 para 4 dias,
-  ou para 6, quando quiser. Para mudar a ordem da semana, segure o ⠿ do card
-  e arraste; útil para começar por outro treino em caso de lesão. O número
-  ("DIA 2") é a posição na semana e se renumera sozinho; o histórico de
-  cargas fica preso ao treino, não à posição, e não se perde ao reordenar.
+  ou para 6, quando quiser. Para mudar a ordem da semana, toque e segure
+  qualquer parte do card por um instante e arraste; útil para começar por
+  outro treino em caso de lesão. O número ("DIA 2") é a posição na semana e
+  se renumera sozinho; o histórico de cargas fica preso ao treino, não à
+  posição, e não se perde ao reordenar.
 - **Exercícios editáveis, com imagem automática**: a rotina muda com o tempo,
   então cada exercício pode ser renomeado, ter séries/repetições ajustadas ou
   ser removido do dia (toque no ✏️ no card), e dá para adicionar exercícios
@@ -47,6 +48,15 @@ tela **Progresso → Backup** para exportar um `.json` de vez em quando (ex.:
 antes de trocar de celular ou limpar os dados do navegador) e guarde o arquivo
 em um lugar seguro (Drive, e-mail para você mesmo etc.). Para restaurar, use
 "Importar backup" com esse mesmo arquivo.
+
+**Se o app parecer estar com uma versão antiga** (uma mudança publicada não
+apareceu): o app tenta se atualizar sozinho, mas em alguns aparelhos/redes o
+service worker pode demorar a notar a versão nova. Vá em **Progresso →
+Ajustes → Forçar atualização agora** — apaga a cópia guardada no aparelho e
+busca a mais recente pela internet, sem afetar treinos, pesos ou aeróbicos
+(esses ficam no armazenamento local, separado do cache do app). O número da
+versão exibido ali (ex.: "versão v7") serve para confirmar visualmente se a
+atualização chegou.
 
 ## Rodar localmente (preview)
 
