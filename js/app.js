@@ -5,12 +5,12 @@ const App = (function () {
   // Mostrada em Progresso > Ajustes, para o usuário conseguir CONFIRMAR pelo
   // olho que uma atualização chegou, sem depender de nenhum mecanismo
   // automático. Bumpar junto com CACHE em sw.js a cada mudança publicada.
-  const VERSAO_APP = 'v7';
+  const VERSAO_APP = 'v9';
 
   let telaAtual = 'semana';
   let diaEmVisualizacao = null;
-  // Toque que virou arraste (pela alça ou por segurar o card) não deve também
-  // abrir o dia ou o editor — o clique seguinte ao soltar consome esta flag.
+  // Toque que virou arraste (segurar o card) não deve também abrir o dia ou
+  // o editor — o clique seguinte ao soltar consome esta flag.
   let ignorarProximoCliqueDia = false;
 
   function el(id) { return document.getElementById(id); }
