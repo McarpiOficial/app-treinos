@@ -84,17 +84,28 @@ const App = (function () {
 
     const grade = el('grade-dias');
     grade.innerHTML = '';
-    CATALOGO.dias.forEach(function (dia) {
+    // O número mostrado ("DIA 2") é a POSIÇÃO na semana, não o id interno:
+    // assim, arrastar um treino para outro lugar renumera a semana sozinho.
+    CATALOGO.dias.forEach(function (dia, indice) {
       const concluido = Dados.diaConcluidoNestaSemana(dia.id);
       const prog = Dados.progressoDia(dia.id);
-      const btn = document.createElement('button');
-      btn.className = 'dia-card' + (concluido ? ' concluido' : '');
-      btn.innerHTML = (concluido ? '<span class="check">✔</span>' : '')
-        + '<div class="dia-num">DIA ' + dia.id + '</div>'
+      const card = document.createElement('div');
+      card.className = 'dia-card' + (concluido ? ' concluido' : '');
+      card.dataset.diaId = dia.id;
+      card.innerHTML =
+        '<span class="dia-pegar" data-acao="arrastar" title="Arraste para reordenar">⠿</span>'
+        + (concluido ? '<span class="check">✔</span>' : '')
+        + '<div class="dia-num">DIA ' + (indice + 1) + '</div>'
         + '<div class="dia-foco">' + dia.foco + '</div>'
-        + '<div class="dia-status">' + (concluido ? 'Concluído' : prog.feitas + '/' + prog.total + ' séries') + '</div>';
-      btn.onclick = function () { abrirDia(dia.id); };
-      grade.appendChild(btn);
+        + '<div class="dia-status">' + (concluido ? 'Concluído' : prog.feitas + '/' + prog.total + ' séries') + '</div>'
+        + '<button type="button" class="dia-editar" data-acao="editar-dia" title="Editar dia">✏️</button>';
+
+      card.onclick = function (ev) {
+        if (ev.target.closest('[data-acao="editar-dia"]')) { abrirModalDia(dia.id); return; }
+        if (ev.target.closest('[data-acao="arrastar"]')) return;
+        abrirDia(dia.id);
+      };
+      grade.appendChild(card);
     });
 
     const btnConcluirSemana = el('btn-concluir-semana');
@@ -102,7 +113,7 @@ const App = (function () {
     btnConcluirSemana.disabled = !podeConcluir;
     btnConcluirSemana.textContent = podeConcluir
       ? 'Concluir Semana ' + e.semanaAtual
-      : 'Complete os 5 treinos para concluir a semana';
+      : 'Complete os ' + total + ' treinos para concluir a semana';
 
     const hoje = Dados.hoje();
     const seteDiasAtras = new Date();
@@ -112,6 +123,133 @@ const App = (function () {
     el('semana-aerobico-sessoes').textContent = resumo.sessoes;
     el('semana-aerobico-minutos').textContent = resumo.minutos;
     el('semana-aerobico-calorias').textContent = resumo.calorias;
+  }
+
+  // ---- Reordenar treinos arrastando ----
+  // O arraste começa só pela alça (⠿), que tem touch-action:none. Fosse o card
+  // inteiro, o navegador rolaria a página junto no celular.
+  //
+  // Enquanto arrasta, o card vira position:fixed e sai do fluxo — os outros
+  // se reacomodam sozinhos, mostrando onde ele vai cair. A ordem final é lida
+  // do próprio DOM ao soltar.
+  function configurarArrasteDias() {
+    const grade = el('grade-dias');
+    let card = null;
+    let arrastando = false;
+    let deslocX = 0;
+    let deslocY = 0;
+
+    function aoPressionar(ev) {
+      const alca = ev.target.closest('[data-acao="arrastar"]');
+      if (!alca) return;
+      card = alca.closest('.dia-card');
+      if (!card || grade.children.length < 2) { card = null; return; }
+      ev.preventDefault();
+
+      const r = card.getBoundingClientRect();
+      deslocX = ev.clientX - r.left;
+      deslocY = ev.clientY - r.top;
+      card.style.width = r.width + 'px';
+      card.style.height = r.height + 'px';
+      card.style.left = r.left + 'px';
+      card.style.top = r.top + 'px';
+      card.classList.add('arrastando');
+      arrastando = true;
+      // Vibração é só um confirmação tátil; alguns navegadores recusam a
+      // chamada dependendo do contexto, e isso não pode atrapalhar o arraste.
+      try { if (navigator.vibrate) navigator.vibrate(15); } catch (e) { /* opcional */ }
+    }
+
+    function aoMover(ev) {
+      if (!arrastando) return;
+      ev.preventDefault();
+      card.style.left = (ev.clientX - deslocX) + 'px';
+      card.style.top = (ev.clientY - deslocY) + 'px';
+
+      // O card arrastado tem pointer-events:none, então isso pega o que está embaixo.
+      const embaixo = document.elementFromPoint(ev.clientX, ev.clientY);
+      const vizinho = embaixo && embaixo.closest ? embaixo.closest('.dia-card') : null;
+      if (!vizinho || vizinho === card || vizinho.parentNode !== grade) return;
+
+      const cards = Array.from(grade.children);
+      if (cards.indexOf(card) < cards.indexOf(vizinho)) grade.insertBefore(card, vizinho.nextSibling);
+      else grade.insertBefore(card, vizinho);
+    }
+
+    function aoSoltar() {
+      if (!arrastando) { card = null; return; }
+      arrastando = false;
+      card.classList.remove('arrastando');
+      card.removeAttribute('style');
+      card = null;
+
+      const idsNaNovaOrdem = Array.from(grade.children).map(function (c) { return Number(c.dataset.diaId); });
+      Dados.reordenarDias(idsNaNovaOrdem);
+      renderSemana();
+      avisar('Ordem dos treinos atualizada.');
+    }
+
+    grade.addEventListener('pointerdown', aoPressionar);
+    document.addEventListener('pointermove', aoMover, { passive: false });
+    document.addEventListener('pointerup', aoSoltar);
+    document.addEventListener('pointercancel', aoSoltar);
+  }
+
+  // ---- Modal de dia de treino ----
+  let diaEmEdicao = null;
+
+  function abrirModalDia(diaId) {
+    diaEmEdicao = diaId;
+    const criando = diaId == null;
+    const dia = criando ? null : diaPorId(diaId);
+
+    el('modal-dia-titulo').textContent = criando ? 'Novo dia de treino' : 'Editar dia de treino';
+    el('modal-dia-foco').value = dia ? dia.foco : '';
+    el('modal-dia-ajuda').textContent = criando
+      ? 'Depois de criar, o dia abre para você adicionar os exercícios.'
+      : 'Excluir o dia remove os exercícios que só existiam nele. O histórico já registrado é mantido.';
+    // Precisa sobrar pelo menos um treino na rotina.
+    el('modal-dia-excluir').style.display = (criando || CATALOGO.dias.length <= 1) ? 'none' : 'block';
+    el('modal-dia').classList.add('ativo');
+    el('modal-dia-foco').focus();
+  }
+
+  function fecharModalDia() {
+    el('modal-dia').classList.remove('ativo');
+    diaEmEdicao = null;
+  }
+
+  function configurarModalDia() {
+    el('btn-novo-dia').onclick = function () { abrirModalDia(null); };
+    el('modal-dia-cancelar').onclick = fecharModalDia;
+
+    el('modal-dia-salvar').onclick = function () {
+      const foco = el('modal-dia-foco').value.trim();
+      if (!foco) { avisar('Dê um nome ao treino (ex.: Peito e Tríceps).'); return; }
+
+      if (diaEmEdicao == null) {
+        const novoId = Dados.adicionarDia(foco);
+        fecharModalDia();
+        avisar('Dia criado. Agora adicione os exercícios.');
+        abrirDia(novoId);
+      } else {
+        Dados.editarDia(diaEmEdicao, { foco: foco });
+        fecharModalDia();
+        renderSemana();
+      }
+    };
+
+    el('modal-dia-excluir').onclick = function () {
+      const id = diaEmEdicao;
+      const dia = diaPorId(id);
+      if (!dia) return;
+      confirmar('Excluir o treino "' + dia.foco + '" da rotina?', function () {
+        if (!Dados.removerDia(id)) { avisar('A rotina precisa ter pelo menos um treino.'); return; }
+        fecharModalDia();
+        navegarPara('semana');
+        avisar('Treino removido da rotina.');
+      }, 'Excluir');
+    };
   }
 
   function aoClicarConcluirSemana() {
@@ -131,7 +269,7 @@ const App = (function () {
     const dia = diaPorId(diaId);
     if (!dia) return;
 
-    el('treino-dia-num').textContent = 'DIA ' + dia.id + ' DE 5';
+    el('treino-dia-num').textContent = 'DIA ' + posicaoDoDia(dia.id) + ' DE ' + CATALOGO.dias.length;
     el('treino-dia-foco').textContent = dia.foco.toUpperCase();
     const prog = Dados.progressoDia(diaId);
     el('treino-dia-sub').textContent = prog.feitas + ' de ' + prog.total + ' séries feitas nesta semana';
@@ -558,8 +696,11 @@ const App = (function () {
       Object.keys(porSemanaEDia).sort().reverse().slice(0, 20).forEach(function (chave) {
         const h = porSemanaEDia[chave];
         const dia = diaPorId(h.dia);
+        // O treino é identificado pelo nome, não pelo número: a posição na
+        // semana muda quando você reordena, e o dia pode até ter sido removido.
+        const nome = (dia && dia.foco) || h.foco || 'Treino removido';
         const li = document.createElement('li');
-        li.innerHTML = '<span>Semana ' + h.semana + ' · Dia ' + h.dia + ' (' + (dia ? dia.foco : '') + ')</span><span>' + fmtData(h.data) + '</span>';
+        li.innerHTML = '<span>Semana ' + h.semana + ' · ' + nome + '</span><span>' + fmtData(h.data) + '</span>';
         listaSemanas.appendChild(li);
       });
     }
@@ -669,6 +810,8 @@ const App = (function () {
     };
 
     configurarZoomGestos();
+    configurarModalDia();
+    configurarArrasteDias();
     configurarModalExercicio();
     el('btn-adicionar-exercicio').onclick = function () { abrirModalExercicio(diaEmVisualizacao, null); };
     Aerobico.init();

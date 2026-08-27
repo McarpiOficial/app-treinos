@@ -78,6 +78,19 @@ function diaPorId(diaId) {
   return CATALOGO.dias.find(function (d) { return d.id === Number(diaId); });
 }
 
+// O id do dia é interno e nunca muda: é ele que amarra o histórico de cargas
+// (chave "diaId:exercicioId"). O número que aparece na tela ("DIA 2") vem da
+// POSIÇÃO na lista, então reordenar os treinos não embaralha o histórico.
+function posicaoDoDia(diaId) {
+  return CATALOGO.dias.findIndex(function (d) { return d.id === Number(diaId); }) + 1;
+}
+
+function proximoIdDia() {
+  let maior = 0;
+  CATALOGO.dias.forEach(function (d) { if (Number(d.id) > maior) maior = Number(d.id); });
+  return maior + 1;
+}
+
 // Gera um id (slug) legível a partir do nome digitado pelo usuário, garantindo
 // que não colida com nenhum id já existente no catálogo vivo.
 function gerarIdExercicio(nome) {

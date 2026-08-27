@@ -7,10 +7,18 @@ dados ficam salvos só no aparelho** (localStorage), sem servidor e sem login.
 ## Funcionalidades
 
 - **Semana**: escolha do dia de treino, contador de semanas de treino e
-  progresso dos 5 treinos da semana atual.
+  progresso dos treinos da semana atual.
 - **Treino do dia**: exercícios com ilustração (toque para ampliar em tela
   cheia, com pinça/duplo-toque), registro do peso usado (botões −/+ ou digitar)
   e marcação das 3 séries.
+- **Rotina flexível**: os dias de treino são agrupamentos que você cria,
+  renomeia e exclui (✏️ no card do dia, ou "+ Novo dia de treino"). Um dia
+  criado funciona igual aos originais: recebe exercícios, registra carga e
+  conta para o fechamento da semana — então dá para passar de 5 para 4 dias,
+  ou para 6, quando quiser. Para mudar a ordem da semana, segure o ⠿ do card
+  e arraste; útil para começar por outro treino em caso de lesão. O número
+  ("DIA 2") é a posição na semana e se renumera sozinho; o histórico de
+  cargas fica preso ao treino, não à posição, e não se perde ao reordenar.
 - **Exercícios editáveis, com imagem automática**: a rotina muda com o tempo,
   então cada exercício pode ser renomeado, ter séries/repetições ajustadas ou
   ser removido do dia (toque no ✏️ no card), e dá para adicionar exercícios

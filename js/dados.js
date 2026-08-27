@@ -115,6 +115,65 @@ const Dados = (function () {
     return id;
   }
 
+  // ---- Dias de treino (agrupamentos) ----
+  // A rotina não é fixa em 5 dias: dá para criar, remover e reordenar os
+  // treinos. Um dia criado aqui é igual aos outros em tudo — recebe exercícios,
+  // registra carga e conta para o fechamento da semana.
+  function adicionarDia(foco) {
+    carregar();
+    const id = proximoIdDia();
+    CATALOGO.dias.push({ id: id, foco: foco || 'Novo treino', exercicios: [] });
+    sincronizarCatalogo();
+    return id;
+  }
+
+  function editarDia(diaId, dadosNovos) {
+    carregar();
+    const dia = diaPorId(diaId);
+    if (!dia) return;
+    if (dadosNovos.foco != null) dia.foco = dadosNovos.foco;
+    sincronizarCatalogo();
+  }
+
+  // Remove o treino da rotina. O histórico já registrado é preservado de
+  // propósito (é registro do que aconteceu); some apenas da semana em curso.
+  function removerDia(diaId) {
+    const e = carregar();
+    if (CATALOGO.dias.length <= 1) return false; // precisa sobrar pelo menos um treino
+    const dia = diaPorId(diaId);
+    if (!dia) return false;
+
+    const exerciciosDoDia = dia.exercicios.slice();
+    CATALOGO.dias = CATALOGO.dias.filter(function (d) { return d.id !== Number(diaId); });
+
+    // Exercício que só existia neste dia deixa de existir no catálogo.
+    exerciciosDoDia.forEach(function (exId) {
+      const aindaUsado = CATALOGO.dias.some(function (d) { return d.exercicios.indexOf(exId) !== -1; });
+      if (!aindaUsado) delete CATALOGO.exercicios[exId];
+    });
+
+    delete e.dias[diaId];
+    sincronizarCatalogo();
+    return true;
+  }
+
+  // Reordena a semana a partir da nova sequência de ids (vinda do arraste).
+  function reordenarDias(idsNaNovaOrdem) {
+    carregar();
+    const porId = {};
+    CATALOGO.dias.forEach(function (d) { porId[d.id] = d; });
+    const novaLista = [];
+    idsNaNovaOrdem.forEach(function (id) {
+      const dia = porId[id];
+      if (dia) { novaLista.push(dia); delete porId[id]; }
+    });
+    // Qualquer dia que não veio na lista (não deveria acontecer) fica no fim,
+    // para nunca sumir um treino por causa de um erro de reordenação.
+    Object.keys(porId).forEach(function (k) { novaLista.push(porId[k]); });
+    CATALOGO.dias = novaLista;
+    sincronizarCatalogo();
+  }
+
   function removerExercicioDoDia(diaId, exercicioId) {
     carregar();
     const dia = diaPorId(diaId);
@@ -262,6 +321,9 @@ const Dados = (function () {
     e.historico.push({
       semana: e.semanaAtual,
       dia: diaId,
+      // Guardamos o nome do treino junto: se o dia for removido da rotina mais
+      // tarde, o histórico continua dizendo o que foi treinado.
+      foco: dia.foco,
       data: hoje(),
       pesos: snapshotPesos
     });
@@ -400,6 +462,10 @@ const Dados = (function () {
     editarExercicio: editarExercicio,
     adicionarExercicio: adicionarExercicio,
     removerExercicioDoDia: removerExercicioDoDia,
+    adicionarDia: adicionarDia,
+    editarDia: editarDia,
+    removerDia: removerDia,
+    reordenarDias: reordenarDias,
     imagemExercicio: imagemExercicio,
     framesExercicio: framesExercicio,
     exportarJSON: exportarJSON,

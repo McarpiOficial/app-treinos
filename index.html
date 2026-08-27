@@ -30,8 +30,11 @@
     </div>
 
     <div class="grade-dias" id="grade-dias"></div>
+    <div class="dica-reordenar">Segure o <strong>⠿</strong> e arraste para trocar a ordem dos treinos.</div>
 
-    <button class="btn-principal" id="btn-concluir-semana" disabled>Complete os 5 treinos para concluir a semana</button>
+    <button type="button" class="btn-secundario" id="btn-novo-dia">+ Novo dia de treino</button>
+
+    <button class="btn-principal" id="btn-concluir-semana" disabled>Complete os treinos para concluir a semana</button>
 
     <div class="card" style="margin-top:14px;">
       <div class="campo-label" style="margin-top:0;">AERÓBICO NOS ÚLTIMOS 7 DIAS</div>
@@ -161,6 +164,23 @@
   <button class="zoom-fechar" id="zoom-fechar">✕</button>
   <img id="zoom-img" src="" alt="Exercício ampliado">
   <div class="zoom-legenda" id="zoom-legenda"></div>
+</div>
+
+<!-- ===== Modal: adicionar/editar dia de treino ===== -->
+<div class="modal-fundo" id="modal-dia">
+  <div class="modal-conteudo">
+    <h3 id="modal-dia-titulo">Editar dia de treino</h3>
+
+    <div class="campo-label" style="margin-top:0;">NOME DO TREINO</div>
+    <input class="campo-input" id="modal-dia-foco" placeholder="Ex.: Peito e Tríceps">
+    <div class="campo-ajuda" id="modal-dia-ajuda">Depois de criar, é só abrir o dia e adicionar os exercícios.</div>
+
+    <div class="modal-linha-botoes">
+      <button type="button" class="btn-secundario btn-perigo" id="modal-dia-excluir" style="display:none;">Excluir dia</button>
+      <button type="button" class="btn-principal" id="modal-dia-salvar" style="margin-top:0;">Salvar</button>
+    </div>
+    <button type="button" class="btn-secundario" id="modal-dia-cancelar" style="margin-top:10px;">Cancelar</button>
+  </div>
 </div>
 
 <!-- ===== Modal: adicionar/editar exercício ===== -->
