@@ -5,7 +5,7 @@ const App = (function () {
   // Mostrada em Progresso > Ajustes, para o usuário conseguir CONFIRMAR pelo
   // olho que uma atualização chegou, sem depender de nenhum mecanismo
   // automático. Bumpar junto com CACHE em sw.js a cada mudança publicada.
-  const VERSAO_APP = 'v11';
+  const VERSAO_APP = 'v12';
 
   let telaAtual = 'semana';
   let diaEmVisualizacao = null;
@@ -100,9 +100,15 @@ const App = (function () {
       const card = document.createElement('div');
       card.className = 'dia-card' + (concluido ? ' concluido' : '');
       card.dataset.diaId = dia.id;
+      const ultimo = indice === CATALOGO.dias.length - 1;
       card.innerHTML =
-        (concluido ? '<span class="check">✔</span>' : '')
-        + '<div class="dia-num">DIA ' + (indice + 1) + '</div>'
+        '<div class="dia-card-topo">'
+        + '  <div class="dia-num">' + (concluido ? '<span class="check">✔</span> ' : '') + 'DIA ' + (indice + 1) + '</div>'
+        + '  <div class="dia-mover">'
+        + '    <button type="button" class="dia-mover-btn" data-acao="mover-cima" title="Mover para cima"' + (indice === 0 ? ' disabled' : '') + '>▲</button>'
+        + '    <button type="button" class="dia-mover-btn" data-acao="mover-baixo" title="Mover para baixo"' + (ultimo ? ' disabled' : '') + '>▼</button>'
+        + '  </div>'
+        + '</div>'
         + '<div class="dia-foco">' + dia.foco + '</div>'
         + '<div class="dia-status">' + (concluido ? 'Concluído' : prog.feitas + '/' + prog.total + ' séries') + '</div>'
         + '<button type="button" class="dia-editar" data-acao="editar-dia" title="Editar dia">✏️</button>';
@@ -110,6 +116,8 @@ const App = (function () {
       card.onclick = function (ev) {
         if (ignorarProximoCliqueDia) { ignorarProximoCliqueDia = false; return; }
         if (ev.target.closest('[data-acao="editar-dia"]')) { abrirModalDia(dia.id); return; }
+        if (ev.target.closest('[data-acao="mover-cima"]')) { moverDia(dia.id, -1); return; }
+        if (ev.target.closest('[data-acao="mover-baixo"]')) { moverDia(dia.id, 1); return; }
         abrirDia(dia.id);
       };
       grade.appendChild(card);
@@ -130,6 +138,19 @@ const App = (function () {
     el('semana-aerobico-sessoes').textContent = resumo.sessoes;
     el('semana-aerobico-minutos').textContent = resumo.minutos;
     el('semana-aerobico-calorias').textContent = resumo.calorias;
+  }
+
+  // Troca discreta de posição (botões ▲▼) — não depende de gesto nenhum,
+  // então funciona sempre, em qualquer aparelho.
+  function moverDia(diaId, delta) {
+    const ids = CATALOGO.dias.map(function (d) { return d.id; });
+    const i = ids.indexOf(Number(diaId));
+    const j = i + delta;
+    if (i === -1 || j < 0 || j >= ids.length) return;
+    const tmp = ids[i]; ids[i] = ids[j]; ids[j] = tmp;
+    Dados.reordenarDias(ids);
+    renderSemana();
+    avisar('Ordem dos treinos atualizada.');
   }
 
   // ---- Reordenar treinos arrastando ----
@@ -202,7 +223,8 @@ const App = (function () {
     }
 
     function aoPressionar(ev) {
-      if (ev.target.closest('[data-acao="editar-dia"]')) return; // editar é toque normal
+      // Editar e os botões ▲▼ são toque normal — não entram no cálculo de arraste.
+      if (ev.target.closest('[data-acao="editar-dia"], [data-acao="mover-cima"], [data-acao="mover-baixo"]')) return;
       const alvo = ev.target.closest('.dia-card');
       if (!alvo || alvo.parentNode !== grade || grade.children.length < 2) return;
       // Não faz preventDefault aqui: se isto for só um toque (sem virar

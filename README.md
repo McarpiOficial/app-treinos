@@ -15,8 +15,8 @@ dados ficam salvos só no aparelho** (localStorage), sem servidor e sem login.
   renomeia e exclui (✏️ no card do dia, ou "+ Novo dia de treino"). Um dia
   criado funciona igual aos originais: recebe exercícios, registra carga e
   conta para o fechamento da semana — então dá para passar de 5 para 4 dias,
-  ou para 6/7, quando quiser. Para mudar a ordem da semana, toque e segure
-  qualquer parte do card por um instante e arraste; útil para começar por
+  ou para 6/7, quando quiser. Para mudar a ordem da semana, use as setas
+  ▲▼ do card (também dá para segurar e arrastar); útil para começar por
   outro treino em caso de lesão. O número ("DIA 2") é a posição na semana e
   se renumera sozinho; o histórico de cargas fica preso ao treino, não à
   posição, e não se perde ao reordenar.
