@@ -2,7 +2,7 @@
 // offline depois (dados continuam só no localStorage, isso aqui é só o "casco"
 // do app: HTML/CSS/JS/imagens). Caminhos relativos para funcionar também
 // dentro de uma subpasta no GitHub Pages (ex.: /app-treinos/).
-const CACHE = 'treinos-cache-v12';
+const CACHE = 'treinos-cache-v13';
 
 const ARQUIVOS = [
   './',
@@ -46,8 +46,14 @@ self.addEventListener('fetch', function (event) {
   if (ehCodigo) {
     // Código: rede primeiro, para que uma versão nova do app apareça já na
     // primeira abertura. Sem internet, cai para o cache e continua funcionando.
+    //
+    // cache:'no-cache' é essencial aqui — sem isso, o fetch() dentro do
+    // service worker ainda pode ser respondido pelo cache HTTP comum do
+    // navegador (uma camada ANTES do service worker), servindo uma versão
+    // antiga mesmo com "rede primeiro". Isso obriga a sempre revalidar com o
+    // servidor (um 304 é rápido quando nada mudou; um 200 novo quando mudou).
     event.respondWith(
-      fetch(event.request).then(function (respostaRede) {
+      fetch(new Request(event.request, { cache: 'no-cache' })).then(function (respostaRede) {
         const copia = respostaRede.clone();
         caches.open(CACHE).then(function (cache) { cache.put(event.request, copia); });
         return respostaRede;
