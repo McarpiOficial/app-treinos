@@ -143,6 +143,8 @@ button, input, select { font-family: inherit; }
      início; tocar num card não rola mais a página por gesto nativo (dá para
      rolar pelas áreas entre os cards, cabeçalho e botões). */
   touch-action: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 .dia-card .dia-num { font-size: 12px; color: var(--laranja); font-weight: 700; letter-spacing: 0.05em; }
 .dia-card .dia-foco { font-size: 15px; font-weight: 600; margin-top: 4px; line-height: 1.25; }
@@ -168,23 +170,23 @@ button, input, select { font-family: inherit; }
   line-height: 1;
 }
 
-/* Card levantado durante o arraste: sai do fluxo do grid (por isso os outros
-   NÃO se movem sozinhos — ver dia-card-alvo abaixo) e ignora o ponteiro, para
-   o elementFromPoint enxergar o card de baixo. */
-.dia-card.arrastando {
+/* Card original enquanto seu fantasma está sendo arrastado: fica só
+   esmaecido no lugar (mesma técnica do arraste de jogador no MarretaFC). */
+.dia-card.origem-arrastando { opacity: 0.35; }
+
+/* O clone que de fato segue o dedo. */
+.dia-card-fantasma {
   position: fixed;
-  z-index: 60;
+  z-index: 9999;
   pointer-events: none;
   margin: 0;
-  transform: scale(1.04);
+  transform: scale(1.05);
   border-color: var(--laranja);
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
   opacity: 0.96;
 }
 
-/* Como o card arrastado não participa mais do grid, os demais não se
-   reacomodam visualmente durante o arraste; este destaque no card sob o dedo
-   é o retorno visual de "é aqui que ele vai entrar" até você soltar. */
+/* Destaque no card sob o dedo — é aqui que o arrastado vai entrar ao soltar. */
 .dia-card-alvo {
   border-color: var(--laranja);
   background: var(--laranja-fraco);

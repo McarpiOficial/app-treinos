@@ -5,7 +5,7 @@ const App = (function () {
   // Mostrada em Progresso > Ajustes, para o usuário conseguir CONFIRMAR pelo
   // olho que uma atualização chegou, sem depender de nenhum mecanismo
   // automático. Bumpar junto com CACHE em sw.js a cada mudança publicada.
-  const VERSAO_APP = 'v9';
+  const VERSAO_APP = 'v10';
 
   let telaAtual = 'semana';
   let diaEmVisualizacao = null;
@@ -133,136 +133,136 @@ const App = (function () {
   }
 
   // ---- Reordenar treinos arrastando ----
-  // Segurar em qualquer parte do card, por um instante, inicia o arraste —
-  // ver aoPressionar. Enquanto arrasta, o card vira position:fixed (sai do
-  // fluxo do grid) e segue o dedo; o card sob o dedo recebe um destaque
-  // (dia-card-alvo) indicando onde ele vai entrar. A troca de fato só é
-  // aplicada ao soltar (ver aoSoltar) — nada se move no DOM durante o arraste.
+  // Mesma técnica usada em MarretaFC (arraste de jogador no campinho): um
+  // CLONE ("fantasma") segue o dedo, enquanto o card original só fica
+  // esmaecido no lugar — evita qualquer disputa com o grid (nada precisa
+  // sair do fluxo) e evita depender só de CSS pointer-events para o
+  // elementFromPoint enxergar o card de baixo (escondemos o fantasma com
+  // display:none no instante exato do hit-test, como lá).
   //
-  // A página fica com o scroll travado (classe trava-scroll no html) do
-  // início do arraste até soltar: sem isso, uma tela que não cabe inteira no
-  // aparelho pode rolar sozinha por baixo do dedo bem no meio do gesto,
-  // fazendo o arraste parecer que "não funcionou".
+  // A decisão "isso é um toque ou um arraste" é por DISTÂNCIA percorrida,
+  // não por tempo: assim que o dedo se move um pouco, já vira arraste — sem
+  // esperar um long-press. Só entra em modo arraste depois desse limiar, o
+  // que preserva o toque normal (abrir o dia) intacto para quem só tocou.
   function configurarArrasteDias() {
     const grade = el('grade-dias');
-    const LIMIAR_MOVIMENTO = 10; // px de tolerância antes de considerar "é rolagem, não arraste"
-    const ESPERA_TOQUE_LONGO = 380; // ms segurando o card (fora da alça) até iniciar o arraste
+    const LIMIAR_MOVIMENTO = 6; // px percorridos até virar arraste
 
-    let card = null;
-    let arrastando = false;
-    let deslocX = 0;
-    let deslocY = 0;
-    let alvoAtual = null; // card sob o dedo agora — só ele recebe destaque
-
-    let timerToqueLongo = null;
-    let pressCard = null;
-    let pressX = 0;
-    let pressY = 0;
+    let origemEl = null;   // card original (fica esmaecido no lugar)
+    let fantasma = null;   // clone que segue o dedo
+    let iniciouArraste = false;
+    let pressX = 0, pressY = 0;
+    let deslocX = 0, deslocY = 0;
+    let alvoAtual = null;
 
     function limparDestaque() {
       if (alvoAtual) { alvoAtual.classList.remove('dia-card-alvo'); alvoAtual = null; }
     }
 
-    function cancelarEsperaToqueLongo() {
-      if (timerToqueLongo) { clearTimeout(timerToqueLongo); timerToqueLongo = null; }
-      pressCard = null;
-    }
-
-    function iniciarArraste(alvoCard, x, y) {
-      card = alvoCard;
-      const r = card.getBoundingClientRect();
+    function criarFantasma(x, y) {
+      const r = origemEl.getBoundingClientRect();
+      fantasma = origemEl.cloneNode(true);
+      fantasma.className = 'dia-card dia-card-fantasma';
+      fantasma.style.width = r.width + 'px';
+      fantasma.style.height = r.height + 'px';
+      fantasma.style.left = r.left + 'px';
+      fantasma.style.top = r.top + 'px';
       deslocX = x - r.left;
       deslocY = y - r.top;
-      card.style.width = r.width + 'px';
-      card.style.height = r.height + 'px';
-      card.style.left = r.left + 'px';
-      card.style.top = r.top + 'px';
-      card.classList.add('arrastando');
+      document.body.appendChild(fantasma);
+      origemEl.classList.add('origem-arrastando');
       document.documentElement.classList.add('trava-scroll');
-      arrastando = true;
-      ignorarProximoCliqueDia = true; // o toque que vira arraste não deve também abrir o dia
-      // Vibração é só uma confirmação tátil; alguns navegadores recusam a
-      // chamada dependendo do contexto, e isso não pode atrapalhar o arraste.
+      ignorarProximoCliqueDia = true; // o toque que virou arraste não deve também abrir o dia
       try { if (navigator.vibrate) navigator.vibrate(15); } catch (e) { /* opcional */ }
     }
 
+    function moverFantasma(x, y) {
+      fantasma.style.left = (x - deslocX) + 'px';
+      fantasma.style.top = (y - deslocY) + 'px';
+    }
+
+    // Acha o card sob o dedo, ignorando o próprio fantasma no hit-test
+    // (escondê-lo é mais confiável entre navegadores do que confiar só em
+    // pointer-events:none na hora exata do elementFromPoint).
+    function cardSobODedo(x, y) {
+      fantasma.style.display = 'none';
+      const embaixo = document.elementFromPoint(x, y);
+      fantasma.style.display = '';
+      const card = embaixo && embaixo.closest ? embaixo.closest('.dia-card') : null;
+      return (card && card !== origemEl && card.parentNode === grade) ? card : null;
+    }
+
+    function limpezaFinal() {
+      if (fantasma) { fantasma.remove(); fantasma = null; }
+      if (origemEl) origemEl.classList.remove('origem-arrastando');
+      limparDestaque();
+      document.documentElement.classList.remove('trava-scroll');
+      origemEl = null;
+      iniciouArraste = false;
+    }
+
     function aoPressionar(ev) {
-      if (ev.target.closest('[data-acao="editar-dia"]')) return; // editar é toque imediato, sem espera
+      if (ev.target.closest('[data-acao="editar-dia"]')) return; // editar é toque normal
       const alvo = ev.target.closest('.dia-card');
       if (!alvo || alvo.parentNode !== grade || grade.children.length < 2) return;
-
-      // Segurar em qualquer parte do card arrasta, depois de um instante. Sem
-      // preventDefault aqui: se o gesto for na verdade uma rolagem, o
-      // navegador segue livre até o limiar de movimento cancelar a espera.
-      pressCard = alvo;
+      // Não faz preventDefault aqui: se isto for só um toque (sem virar
+      // arraste), o clique nativo do card precisa disparar normalmente.
+      origemEl = alvo;
       pressX = ev.clientX;
       pressY = ev.clientY;
-      timerToqueLongo = setTimeout(function () {
-        timerToqueLongo = null;
-        if (pressCard) { iniciarArraste(pressCard, pressX, pressY); pressCard = null; }
-      }, ESPERA_TOQUE_LONGO);
+      iniciouArraste = false;
     }
 
     function aoMover(ev) {
-      if (arrastando) {
-        ev.preventDefault();
-        card.style.left = (ev.clientX - deslocX) + 'px';
-        card.style.top = (ev.clientY - deslocY) + 'px';
+      if (!origemEl) return;
 
-        // O card arrastado tem pointer-events:none, então isso pega o que está embaixo.
-        const embaixo = document.elementFromPoint(ev.clientX, ev.clientY);
-        const vizinho = embaixo && embaixo.closest ? embaixo.closest('.dia-card') : null;
-        const valido = (vizinho && vizinho !== card && vizinho.parentNode === grade) ? vizinho : null;
-        if (valido !== alvoAtual) {
-          limparDestaque();
-          alvoAtual = valido;
-          if (alvoAtual) alvoAtual.classList.add('dia-card-alvo');
-        }
-        return;
+      if (!iniciouArraste) {
+        const dx = ev.clientX - pressX, dy = ev.clientY - pressY;
+        if (Math.hypot(dx, dy) < LIMIAR_MOVIMENTO) return; // ainda pode ser só um toque
+        iniciouArraste = true;
+        criarFantasma(pressX, pressY);
       }
 
-      if (pressCard) {
-        const dx = ev.clientX - pressX, dy = ev.clientY - pressY;
-        if (Math.hypot(dx, dy) > LIMIAR_MOVIMENTO) cancelarEsperaToqueLongo();
+      ev.preventDefault();
+      moverFantasma(ev.clientX, ev.clientY);
+
+      const valido = cardSobODedo(ev.clientX, ev.clientY);
+      if (valido !== alvoAtual) {
+        limparDestaque();
+        alvoAtual = valido;
+        if (alvoAtual) alvoAtual.classList.add('dia-card-alvo');
       }
     }
 
-    // A troca de posição é calculada e aplicada UMA VEZ, aqui — não a cada
-    // movimento. O card arrastado fica position:fixed (fora do grid), então os
-    // outros não se reacomodam visualmente durante o arraste; recalcular e
-    // reinserir no DOM a cada pointermove causava uma oscilação (troca e
-    // desfaz a cada leve tremor do dedo) cujo resultado final era instável —
-    // era esse o "não aconteceu nada, voltou pro lugar".
     function aoSoltar() {
-      cancelarEsperaToqueLongo();
-      if (!arrastando) { card = null; return; }
-      arrastando = false;
-      card.classList.remove('arrastando');
-      card.removeAttribute('style');
-      document.documentElement.classList.remove('trava-scroll');
+      if (!origemEl) return;
+      if (!iniciouArraste) { origemEl = null; return; } // toque simples: deixa o click normal abrir o dia
 
+      const elOrigem = origemEl;
       const destino = alvoAtual;
-      limparDestaque();
-      const cardSolto = card;
-      card = null;
-
+      limpezaFinal();
       // Rede de segurança: se por algum motivo o clique-fantasma do toque não
       // disparar (ex.: pointercancel), a flag não fica travada em "true" para sempre.
       setTimeout(function () { ignorarProximoCliqueDia = false; }, 400);
 
       if (!destino) return; // soltou fora de outro card: mantém a ordem original
 
-      grade.insertBefore(cardSolto, destino);
+      grade.insertBefore(elOrigem, destino);
       const idsNaNovaOrdem = Array.from(grade.children).map(function (c) { return Number(c.dataset.diaId); });
       Dados.reordenarDias(idsNaNovaOrdem);
       renderSemana();
       avisar('Ordem dos treinos atualizada.');
     }
 
+    function aoCancelar() {
+      if (origemEl && iniciouArraste) limpezaFinal();
+      else origemEl = null;
+    }
+
     grade.addEventListener('pointerdown', aoPressionar);
     document.addEventListener('pointermove', aoMover, { passive: false });
     document.addEventListener('pointerup', aoSoltar);
-    document.addEventListener('pointercancel', aoSoltar);
+    document.addEventListener('pointercancel', aoCancelar);
   }
 
   // ---- Modal de dia de treino ----
