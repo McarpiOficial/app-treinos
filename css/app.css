@@ -163,9 +163,9 @@ button, input, select { font-family: inherit; }
   line-height: 1;
 }
 
-/* Card levantado durante o arraste: sai do fluxo (os outros se reacomodam e
-   mostram onde ele vai cair) e ignora o ponteiro, para o elementFromPoint
-   enxergar o card de baixo. */
+/* Card levantado durante o arraste: sai do fluxo do grid (por isso os outros
+   NÃO se movem sozinhos — ver dia-card-alvo abaixo) e ignora o ponteiro, para
+   o elementFromPoint enxergar o card de baixo. */
 .dia-card.arrastando {
   position: fixed;
   z-index: 60;
@@ -175,6 +175,14 @@ button, input, select { font-family: inherit; }
   border-color: var(--laranja);
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
   opacity: 0.96;
+}
+
+/* Como o card arrastado não participa mais do grid, os demais não se
+   reacomodam visualmente durante o arraste; este destaque no card sob o dedo
+   é o retorno visual de "é aqui que ele vai entrar" até você soltar. */
+.dia-card-alvo {
+  border-color: var(--laranja);
+  background: var(--laranja-fraco);
 }
 
 .dica-reordenar {

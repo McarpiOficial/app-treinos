@@ -4,6 +4,9 @@
 const App = (function () {
   let telaAtual = 'semana';
   let diaEmVisualizacao = null;
+  // Toque que virou arraste (pela alça ou por segurar o card) não deve também
+  // abrir o dia ou o editor — o clique seguinte ao soltar consome esta flag.
+  let ignorarProximoCliqueDia = false;
 
   function el(id) { return document.getElementById(id); }
   function fmtPeso(v) {
@@ -101,6 +104,7 @@ const App = (function () {
         + '<button type="button" class="dia-editar" data-acao="editar-dia" title="Editar dia">✏️</button>';
 
       card.onclick = function (ev) {
+        if (ignorarProximoCliqueDia) { ignorarProximoCliqueDia = false; return; }
         if (ev.target.closest('[data-acao="editar-dia"]')) { abrirModalDia(dia.id); return; }
         if (ev.target.closest('[data-acao="arrastar"]')) return;
         abrirDia(dia.id);
@@ -134,55 +138,118 @@ const App = (function () {
   // do próprio DOM ao soltar.
   function configurarArrasteDias() {
     const grade = el('grade-dias');
+    const LIMIAR_MOVIMENTO = 10; // px de tolerância antes de considerar "é rolagem, não arraste"
+    const ESPERA_TOQUE_LONGO = 380; // ms segurando o card (fora da alça) até iniciar o arraste
+
     let card = null;
     let arrastando = false;
     let deslocX = 0;
     let deslocY = 0;
+    let alvoAtual = null; // card sob o dedo agora — só ele recebe destaque
 
-    function aoPressionar(ev) {
-      const alca = ev.target.closest('[data-acao="arrastar"]');
-      if (!alca) return;
-      card = alca.closest('.dia-card');
-      if (!card || grade.children.length < 2) { card = null; return; }
-      ev.preventDefault();
+    let timerToqueLongo = null;
+    let pressCard = null;
+    let pressX = 0;
+    let pressY = 0;
 
+    function limparDestaque() {
+      if (alvoAtual) { alvoAtual.classList.remove('dia-card-alvo'); alvoAtual = null; }
+    }
+
+    function cancelarEsperaToqueLongo() {
+      if (timerToqueLongo) { clearTimeout(timerToqueLongo); timerToqueLongo = null; }
+      pressCard = null;
+    }
+
+    function iniciarArraste(alvoCard, x, y) {
+      card = alvoCard;
       const r = card.getBoundingClientRect();
-      deslocX = ev.clientX - r.left;
-      deslocY = ev.clientY - r.top;
+      deslocX = x - r.left;
+      deslocY = y - r.top;
       card.style.width = r.width + 'px';
       card.style.height = r.height + 'px';
       card.style.left = r.left + 'px';
       card.style.top = r.top + 'px';
       card.classList.add('arrastando');
       arrastando = true;
-      // Vibração é só um confirmação tátil; alguns navegadores recusam a
+      ignorarProximoCliqueDia = true; // o toque que vira arraste não deve também abrir o dia
+      // Vibração é só uma confirmação tátil; alguns navegadores recusam a
       // chamada dependendo do contexto, e isso não pode atrapalhar o arraste.
       try { if (navigator.vibrate) navigator.vibrate(15); } catch (e) { /* opcional */ }
     }
 
-    function aoMover(ev) {
-      if (!arrastando) return;
-      ev.preventDefault();
-      card.style.left = (ev.clientX - deslocX) + 'px';
-      card.style.top = (ev.clientY - deslocY) + 'px';
+    function aoPressionar(ev) {
+      if (ev.target.closest('[data-acao="editar-dia"]')) return; // editar é toque imediato, sem espera
+      const alvo = ev.target.closest('.dia-card');
+      if (!alvo || alvo.parentNode !== grade || grade.children.length < 2) return;
 
-      // O card arrastado tem pointer-events:none, então isso pega o que está embaixo.
-      const embaixo = document.elementFromPoint(ev.clientX, ev.clientY);
-      const vizinho = embaixo && embaixo.closest ? embaixo.closest('.dia-card') : null;
-      if (!vizinho || vizinho === card || vizinho.parentNode !== grade) return;
+      if (ev.target.closest('[data-acao="arrastar"]')) {
+        ev.preventDefault();
+        iniciarArraste(alvo, ev.clientX, ev.clientY);
+        return;
+      }
 
-      const cards = Array.from(grade.children);
-      if (cards.indexOf(card) < cards.indexOf(vizinho)) grade.insertBefore(card, vizinho.nextSibling);
-      else grade.insertBefore(card, vizinho);
+      // Segurar em qualquer parte do card também arrasta, depois de um instante
+      // — evita ter que acertar o ícone pequeno com o dedo. Sem preventDefault
+      // aqui: se o gesto for na verdade uma rolagem, o navegador segue livre.
+      pressCard = alvo;
+      pressX = ev.clientX;
+      pressY = ev.clientY;
+      timerToqueLongo = setTimeout(function () {
+        timerToqueLongo = null;
+        if (pressCard) { iniciarArraste(pressCard, pressX, pressY); pressCard = null; }
+      }, ESPERA_TOQUE_LONGO);
     }
 
+    function aoMover(ev) {
+      if (arrastando) {
+        ev.preventDefault();
+        card.style.left = (ev.clientX - deslocX) + 'px';
+        card.style.top = (ev.clientY - deslocY) + 'px';
+
+        // O card arrastado tem pointer-events:none, então isso pega o que está embaixo.
+        const embaixo = document.elementFromPoint(ev.clientX, ev.clientY);
+        const vizinho = embaixo && embaixo.closest ? embaixo.closest('.dia-card') : null;
+        const valido = (vizinho && vizinho !== card && vizinho.parentNode === grade) ? vizinho : null;
+        if (valido !== alvoAtual) {
+          limparDestaque();
+          alvoAtual = valido;
+          if (alvoAtual) alvoAtual.classList.add('dia-card-alvo');
+        }
+        return;
+      }
+
+      if (pressCard) {
+        const dx = ev.clientX - pressX, dy = ev.clientY - pressY;
+        if (Math.hypot(dx, dy) > LIMIAR_MOVIMENTO) cancelarEsperaToqueLongo();
+      }
+    }
+
+    // A troca de posição é calculada e aplicada UMA VEZ, aqui — não a cada
+    // movimento. O card arrastado fica position:fixed (fora do grid), então os
+    // outros não se reacomodam visualmente durante o arraste; recalcular e
+    // reinserir no DOM a cada pointermove causava uma oscilação (troca e
+    // desfaz a cada leve tremor do dedo) cujo resultado final era instável —
+    // era esse o "não aconteceu nada, voltou pro lugar".
     function aoSoltar() {
+      cancelarEsperaToqueLongo();
       if (!arrastando) { card = null; return; }
       arrastando = false;
       card.classList.remove('arrastando');
       card.removeAttribute('style');
+
+      const destino = alvoAtual;
+      limparDestaque();
+      const cardSolto = card;
       card = null;
 
+      // Rede de segurança: se por algum motivo o clique-fantasma do toque não
+      // disparar (ex.: pointercancel), a flag não fica travada em "true" para sempre.
+      setTimeout(function () { ignorarProximoCliqueDia = false; }, 400);
+
+      if (!destino) return; // soltou fora de outro card: mantém a ordem original
+
+      grade.insertBefore(cardSolto, destino);
       const idsNaNovaOrdem = Array.from(grade.children).map(function (c) { return Number(c.dataset.diaId); });
       Dados.reordenarDias(idsNaNovaOrdem);
       renderSemana();
