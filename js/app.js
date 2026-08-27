@@ -5,7 +5,7 @@ const App = (function () {
   // Mostrada em Progresso > Ajustes, para o usuário conseguir CONFIRMAR pelo
   // olho que uma atualização chegou, sem depender de nenhum mecanismo
   // automático. Bumpar junto com CACHE em sw.js a cada mudança publicada.
-  const VERSAO_APP = 'v10';
+  const VERSAO_APP = 'v11';
 
   let telaAtual = 'semana';
   let diaEmVisualizacao = null;
@@ -238,18 +238,28 @@ const App = (function () {
       if (!origemEl) return;
       if (!iniciouArraste) { origemEl = null; return; } // toque simples: deixa o click normal abrir o dia
 
-      const elOrigem = origemEl;
-      const destino = alvoAtual;
+      const idOrigem = Number(origemEl.dataset.diaId);
+      const idDestino = alvoAtual ? Number(alvoAtual.dataset.diaId) : null;
       limpezaFinal();
       // Rede de segurança: se por algum motivo o clique-fantasma do toque não
       // disparar (ex.: pointercancel), a flag não fica travada em "true" para sempre.
       setTimeout(function () { ignorarProximoCliqueDia = false; }, 400);
 
-      if (!destino) return; // soltou fora de outro card: mantém a ordem original
+      if (idDestino == null) return; // soltou fora de outro card: mantém a ordem original
 
-      grade.insertBefore(elOrigem, destino);
-      const idsNaNovaOrdem = Array.from(grade.children).map(function (c) { return Number(c.dataset.diaId); });
-      Dados.reordenarDias(idsNaNovaOrdem);
+      // TROCA de fato (não "insere antes de"): os dois trocam de posição.
+      // insertBefore(origem, destino) parecia funcionar arrastando para longe,
+      // mas quando origem já está bem na posição anterior a destino — exatamente
+      // o caso de arrastar para o vizinho do lado — "inserir antes" não muda
+      // nada, porque já estava lá. Era esse o bug: soltar em cima do vizinho
+      // dava a mensagem de sucesso mas a ordem ficava idêntica.
+      const ids = CATALOGO.dias.map(function (d) { return d.id; });
+      const iOrigem = ids.indexOf(idOrigem);
+      const iDestino = ids.indexOf(idDestino);
+      if (iOrigem === -1 || iDestino === -1) return;
+      const tmp = ids[iOrigem]; ids[iOrigem] = ids[iDestino]; ids[iDestino] = tmp;
+
+      Dados.reordenarDias(ids);
       renderSemana();
       avisar('Ordem dos treinos atualizada.');
     }
