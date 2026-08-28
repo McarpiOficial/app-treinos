@@ -10,7 +10,9 @@ dados ficam salvos só no aparelho** (localStorage), sem servidor e sem login.
   progresso dos treinos da semana atual.
 - **Treino do dia**: exercícios com ilustração (toque para ampliar em tela
   cheia, com pinça/duplo-toque), registro do peso usado (botões −/+ ou digitar)
-  e marcação das 3 séries.
+  e marcação das 3 séries. Um contador no topo mostra quantos exercícios
+  ainda faltam (um exercício "conta" quando todas as suas séries estão
+  marcadas) — decresce conforme o treino avança.
 - **Rotina flexível**: os dias de treino são agrupamentos que você cria,
   renomeia e exclui (✏️ no card do dia, ou "+ Novo dia de treino"). Um dia
   criado funciona igual aos originais: recebe exercícios, registra carga e
@@ -31,8 +33,23 @@ dados ficam salvos só no aparelho** (localStorage), sem servidor e sem login.
   respeitada e não é sobrescrita depois.
 - **Aeróbico**: lista de sessões (spinning, esteira etc.) com tipo, tempo e
   calorias — usada normalmente às terças, quintas e domingos.
-- **Progresso**: gráfico de evolução de carga por exercício, histórico de
-  treinos concluídos e backup (exportar/importar `.json`).
+- **Abdômen**: exercícios de core (prancha, abdominal reto/infra/bicicleta,
+  polichinelo etc., ou um "Outro" digitado à mão), registrados por
+  **repetições** ou por **tempo** — para tempo, um cronômetro regressivo
+  (chips de 15s a 90s, ou digitado) conta e registra sozinho ao chegar a
+  zero, com vibração no fim.
+- **Alimentação**: descreva o que comeu — **digitando ou ditando por voz**
+  (🎤, com fallback automático para digitar se o navegador não suportar ou
+  a transcrição errar) — e o app estima as calorias por um dicionário local
+  de alimentos comuns (a estimativa aparece antes de salvar e pode ser
+  ajustada à mão). Mostra o total de calorias comidas hoje e, se o TMB
+  estiver calculado (em Progresso), o saldo do dia (TMB − comido). Histórico
+  agrupado por dia, com o total de cada dia.
+- **Progresso**: gráfico de evolução de carga por exercício; histórico
+  separado por tipo (musculação, aeróbico, abdômen, alimentação); calculadora
+  de TMB (Taxa Metabólica Basal — fórmula de Mifflin-St Jeor, a partir de
+  peso/altura/idade/sexo) cujo resultado alimenta o saldo mostrado em
+  Alimentação; e backup (exportar/importar `.json`).
 
 ## Como usar no celular
 
@@ -97,6 +114,9 @@ js/exercicios.js        catálogo dos 5 dias e dos exercícios (editável)
 js/dados.js             leitura/escrita no localStorage
 js/app.js               navegação, telas, zoom, backup
 js/aerobico.js           tela de aeróbico
+js/abdominal.js         tela de abdômen (repetições/tempo + cronômetro)
+js/alimentacao.js       tela de alimentação (voz, calorias, saldo do dia)
+js/alimentos.js         dicionário local + estimador de calorias
 js/biblioteca.js        índice da biblioteca de fotos (gerado)
 js/imagens.js           casa o nome do exercício com a foto certa
 img/lib/<slug>/*.jpg    fotos dos exercícios (2 por movimento)

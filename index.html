@@ -57,6 +57,7 @@
       <div class="dia-num" id="treino-dia-num">DIA 1 DE 5</div>
       <h2 id="treino-dia-foco">PEITO E TRÍCEPS</h2>
       <div class="sub" id="treino-dia-sub">0 de 0 séries feitas nesta semana</div>
+      <div class="contador-restantes" id="treino-contador-restantes">0 exercícios restantes</div>
     </div>
 
     <div id="lista-exercicios"></div>
@@ -104,6 +105,97 @@
     <div id="lista-aerobicos"></div>
   </section>
 
+  <!-- ===== Tela: Abdômen ===== -->
+  <section id="tela-abdominal" class="tela">
+    <div class="topo"><h1>Abdômen</h1></div>
+
+    <div class="resumo-linha">
+      <div class="card"><div class="valor" id="resumo-abdominal-sessoes">0</div><div class="rotulo">sessões (7d)</div></div>
+    </div>
+
+    <form id="form-abdominal" class="card">
+      <h3 id="titulo-form-abdominal" style="margin:0 0 4px;">Registrar abdômen</h3>
+
+      <div class="campo-label" style="margin-top:0;">EXERCÍCIO</div>
+      <div class="chips" id="chips-exercicio-abdominal"></div>
+      <input class="campo-input" id="input-exercicio-outro" placeholder="Qual? (ex.: Roda abdominal...)" style="display:none; margin-top:8px;">
+
+      <div class="campo-label">REGISTRAR POR</div>
+      <div class="chips">
+        <button type="button" class="chip" id="modo-reps-abdominal">Repetições</button>
+        <button type="button" class="chip" id="modo-tempo-abdominal">Tempo</button>
+      </div>
+
+      <div id="area-reps-abdominal" style="margin-top:10px;">
+        <div class="campo-label" style="margin-top:0;">REPETIÇÕES</div>
+        <input class="campo-input" id="input-repeticoes-abdominal" type="number" inputmode="numeric" placeholder="Ex.: 20">
+      </div>
+
+      <div id="area-tempo-abdominal" style="display:none; margin-top:10px;">
+        <div class="campo-label" style="margin-top:0;">TEMPO</div>
+        <div class="chips" id="chips-tempo-abdominal"></div>
+        <input class="campo-input" id="input-segundos-manual" type="number" inputmode="numeric" placeholder="Outro tempo (segundos)" style="margin-top:8px;">
+
+        <div class="cronometro-caixa">
+          <div class="cronometro-mostrador" id="cronometro-mostrador">0:00</div>
+          <div style="display:flex; gap:10px;">
+            <button type="button" class="btn-principal" id="btn-iniciar-cronometro" style="margin-top:0;">▶ Iniciar</button>
+            <button type="button" class="btn-secundario" id="btn-parar-cronometro" style="display:none;">Parar</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="campo-label">DATA</div>
+      <input class="campo-input" id="input-data-abdominal" type="date">
+
+      <div class="modal-linha-botoes">
+        <button type="button" class="btn-secundario" id="btn-cancelar-edicao-abdominal" style="display:none;">Cancelar</button>
+        <button type="submit" class="btn-principal" id="btn-salvar-abdominal" style="margin-top:0;">Registrar</button>
+      </div>
+    </form>
+
+    <div id="lista-abdominais"></div>
+  </section>
+
+  <!-- ===== Tela: Alimentação ===== -->
+  <section id="tela-alimentacao" class="tela">
+    <div class="topo"><h1>Alimentação</h1></div>
+
+    <div class="card">
+      <div class="campo-label" style="margin-top:0;">HOJE</div>
+      <div class="resumo-mini">
+        <div><div class="valor" id="alimentacao-consumidas-hoje">0</div><div class="rotulo">kcal comidas</div></div>
+        <div><div class="valor" id="alimentacao-tmb">—</div><div class="rotulo">TMB</div></div>
+        <div><div class="valor" id="alimentacao-saldo">—</div><div class="rotulo">saldo</div></div>
+      </div>
+      <div class="campo-ajuda" id="alimentacao-sem-tmb" style="display:none;">Calcule seu TMB em Progresso para ver o saldo do dia.</div>
+    </div>
+
+    <form id="form-alimentacao" class="card">
+      <h3 id="titulo-form-alimentacao" style="margin:0 0 4px;">Registrar alimentação</h3>
+
+      <div class="campo-label" style="margin-top:0;">O QUE VOCÊ COMEU?</div>
+      <div class="campo-com-mic">
+        <textarea class="campo-input campo-textarea" id="input-descricao-alimentacao" rows="3" placeholder="Ex.: 2 ovos, um pão francês e uma banana"></textarea>
+        <button type="button" class="btn-microfone" id="btn-microfone-alimentacao" title="Ditar por voz">🎤</button>
+      </div>
+      <div class="campo-ajuda" id="itens-reconhecidos-alimentacao"></div>
+
+      <div class="campo-label">CALORIAS (estimadas — ajuste se precisar)</div>
+      <input class="campo-input" id="input-calorias-alimentacao" type="number" inputmode="numeric" placeholder="Ex.: 350">
+
+      <div class="campo-label">DATA</div>
+      <input class="campo-input" id="input-data-alimentacao" type="date">
+
+      <div class="modal-linha-botoes">
+        <button type="button" class="btn-secundario" id="btn-cancelar-edicao-alimentacao" style="display:none;">Cancelar</button>
+        <button type="submit" class="btn-principal" id="btn-salvar-alimentacao" style="margin-top:0;">Registrar</button>
+      </div>
+    </form>
+
+    <div id="lista-alimentacoes"></div>
+  </section>
+
   <!-- ===== Tela: Progresso ===== -->
   <section id="tela-progresso" class="tela">
     <div class="topo"><h1>Progresso</h1></div>
@@ -115,8 +207,52 @@
     </div>
 
     <div class="card">
-      <div class="campo-label" style="margin-top:0;">TREINOS CONCLUÍDOS RECENTEMENTE</div>
+      <div class="campo-label" style="margin-top:0;">MUSCULAÇÃO · TREINOS CONCLUÍDOS</div>
       <ul class="lista-simples" id="lista-semanas-concluidas"></ul>
+    </div>
+
+    <div class="card">
+      <div class="campo-label" style="margin-top:0;">AERÓBICO · HISTÓRICO</div>
+      <ul class="lista-simples" id="lista-historico-aerobico"></ul>
+    </div>
+
+    <div class="card">
+      <div class="campo-label" style="margin-top:0;">ABDÔMEN · HISTÓRICO</div>
+      <ul class="lista-simples" id="lista-historico-abdominal"></ul>
+    </div>
+
+    <div class="card">
+      <div class="campo-label" style="margin-top:0;">ALIMENTAÇÃO · HISTÓRICO</div>
+      <ul class="lista-simples" id="lista-historico-alimentacao"></ul>
+    </div>
+
+    <div class="card">
+      <div class="campo-label" style="margin-top:0;">TAXA METABÓLICA BASAL (TMB)</div>
+      <div style="display:flex; gap:10px;">
+        <div style="flex:1;">
+          <div class="campo-label" style="margin-top:0;">Peso (kg)</div>
+          <input class="campo-input" id="input-tmb-peso" type="number" step="0.1" inputmode="decimal">
+        </div>
+        <div style="flex:1;">
+          <div class="campo-label" style="margin-top:0;">Altura (cm)</div>
+          <input class="campo-input" id="input-tmb-altura" type="number" step="1" inputmode="numeric">
+        </div>
+      </div>
+      <div style="display:flex; gap:10px; align-items:flex-start;">
+        <div style="flex:1;">
+          <div class="campo-label">Idade</div>
+          <input class="campo-input" id="input-tmb-idade" type="number" step="1" inputmode="numeric">
+        </div>
+        <div style="flex:1;">
+          <div class="campo-label">Sexo</div>
+          <div class="chips" id="chips-tmb-sexo">
+            <button type="button" class="chip" data-sexo="masculino">Masculino</button>
+            <button type="button" class="chip" data-sexo="feminino">Feminino</button>
+          </div>
+        </div>
+      </div>
+      <button type="button" class="btn-principal" id="btn-calcular-tmb">Calcular TMB</button>
+      <div class="tmb-resultado" id="tmb-resultado" style="display:none;">Seu TMB: <strong id="tmb-valor">—</strong> kcal/dia</div>
     </div>
 
     <div class="card">
@@ -159,7 +295,9 @@
 <nav class="nav-inferior">
   <button class="nav-item" data-tela="semana"><span class="icone">📅</span>Semana</button>
   <button class="nav-item" data-tela="treino"><span class="icone">🏋️</span>Treino</button>
+  <button class="nav-item" data-tela="abdominal"><span class="icone">🧘</span>Abdômen</button>
   <button class="nav-item" data-tela="aerobico"><span class="icone">🏃</span>Aeróbico</button>
+  <button class="nav-item" data-tela="alimentacao"><span class="icone">🍽️</span>Alimentação</button>
   <button class="nav-item" data-tela="progresso"><span class="icone">📈</span>Progresso</button>
 </nav>
 
@@ -257,6 +395,9 @@
 <script src="./js/imagens.js"></script>
 <script src="./js/dados.js"></script>
 <script src="./js/aerobico.js"></script>
+<script src="./js/abdominal.js"></script>
+<script src="./js/alimentos.js"></script>
+<script src="./js/alimentacao.js"></script>
 <script src="./js/app.js"></script>
 </body>
 </html>

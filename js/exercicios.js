@@ -62,7 +62,22 @@ const CATALOGO_PADRAO = {
     'elevacao-lateral': { nome: 'Elevação Lateral', series: 3, reps: '10 a 12', lib: 'elevacao-lateral' },
     'desenvolvimento': { nome: 'Desenvolvimento', series: 3, reps: '10 a 12', lib: 'desenvolvimento-com-halteres' }
   },
-  tiposAerobico: ['Spinning', 'Esteira', 'Bike', 'Elíptico', 'Corrida', 'Caminhada', 'Escada', 'Natação', 'Outro']
+  tiposAerobico: ['Spinning', 'Esteira', 'Bike', 'Elíptico', 'Corrida', 'Caminhada', 'Escada', 'Natação', 'Outro'],
+  // Exercícios de abdômen: "modo" é só o padrão sugerido ao escolher — o
+  // usuário pode registrar qualquer um deles por repetições ou por tempo.
+  tiposAbdominal: [
+    { nome: 'Prancha', modo: 'tempo' },
+    { nome: 'Prancha Lateral', modo: 'tempo' },
+    { nome: 'Abdominal Reto', modo: 'reps' },
+    { nome: 'Abdominal Infra', modo: 'reps' },
+    { nome: 'Abdominal Bicicleta', modo: 'reps' },
+    { nome: 'Abdominal Oblíquo', modo: 'reps' },
+    { nome: 'Abdominal Canivete', modo: 'reps' },
+    { nome: 'Elevação de Pernas', modo: 'reps' },
+    { nome: 'Polichinelo', modo: 'tempo' },
+    { nome: 'Mountain Climber', modo: 'tempo' },
+    { nome: 'Outro', modo: 'reps' }
+  ]
 };
 
 // Catálogo "vivo": o que o app realmente lê e mostra. Começa como uma cópia

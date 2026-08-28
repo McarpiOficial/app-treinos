@@ -273,6 +273,17 @@ button, input, select { font-family: inherit; }
 .cabecalho-treino .dia-num { color: var(--laranja); font-weight: 700; font-size: 13px; letter-spacing: 0.05em; }
 .cabecalho-treino h2 { margin: 4px 0 0; font-size: 22px; }
 .cabecalho-treino .sub { color: var(--texto-fraco); font-size: 13px; margin-top: 4px; }
+.contador-restantes {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: var(--laranja-fraco);
+  color: var(--laranja);
+  font-size: 12px;
+  font-weight: 700;
+}
+.contador-restantes.tudo-feito { background: rgba(53, 196, 106, 0.18); color: var(--verde); }
 
 /* O card do exercício é dominado pela foto: é ela que tira a dúvida de execução
    na hora do treino, então ocupa a largura toda em vez de ser uma miniatura. */
@@ -345,8 +356,58 @@ button, input, select { font-family: inherit; }
   color: var(--texto-fraco);
   margin-top: 6px;
 }
-.dica-peso .delta-pos { color: var(--verde); font-weight: 600; }
-.dica-peso .delta-neg { color: var(--vermelho); font-weight: 600; }
+.dica-peso .delta-pos, .delta-pos { color: var(--verde); font-weight: 600; }
+.dica-peso .delta-neg, .delta-neg { color: var(--vermelho); font-weight: 600; }
+
+/* ---- Abdômen: cronômetro regressivo ---- */
+.cronometro-caixa {
+  margin-top: 14px;
+  padding: 18px;
+  border-radius: var(--raio);
+  background: var(--bg-elevado);
+  text-align: center;
+}
+.cronometro-mostrador {
+  font-size: 44px;
+  font-weight: 800;
+  color: var(--texto);
+  margin-bottom: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.cronometro-mostrador.rodando { color: var(--laranja); }
+
+/* ---- Alimentação: descrição por voz ---- */
+.campo-com-mic { position: relative; margin-top: 8px; }
+.campo-textarea { resize: vertical; min-height: 72px; padding-right: 54px; }
+.btn-microfone {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--borda);
+  background: var(--bg-elevado);
+  color: var(--texto);
+  font-size: 16px;
+}
+.btn-microfone:disabled { opacity: 0.4; }
+.btn-microfone.ouvindo { background: var(--vermelho); border-color: var(--vermelho); animation: pulsar 1s ease-in-out infinite; }
+@keyframes pulsar {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+.tmb-resultado {
+  margin-top: 14px;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--laranja-fraco);
+  color: var(--texto);
+  font-size: 14px;
+  text-align: center;
+}
+.tmb-resultado strong { color: var(--laranja); font-size: 18px; }
 
 .serie-bolinhas {
   padding: 0 14px 14px;
@@ -490,6 +551,7 @@ button, input, select { font-family: inherit; }
 }
 .nav-item {
   flex: 1;
+  min-width: 0;
   background: none;
   border: none;
   color: var(--texto-fraco);
@@ -498,9 +560,14 @@ button, input, select { font-family: inherit; }
   align-items: center;
   justify-content: center;
   gap: 2px;
-  font-size: 11px;
+  font-size: 9.5px;
+  line-height: 1.15;
+  padding: 0 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.nav-item .icone { font-size: 19px; }
+.nav-item .icone { font-size: 17px; }
 .nav-item.ativo { color: var(--laranja); }
 
 /* ---- Modal simples (editar aeróbico / digitar peso) ---- */

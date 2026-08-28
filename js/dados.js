@@ -19,7 +19,10 @@ const Dados = (function () {
       dias: {},
       pesos: {},
       historico: [],
-      aerobicos: []
+      aerobicos: [],
+      abdominais: [],
+      alimentacoes: [],
+      perfil: null
     };
   }
 
@@ -41,6 +44,9 @@ const Dados = (function () {
       estado.pesos = dados.pesos || {};
       estado.historico = dados.historico || [];
       estado.aerobicos = dados.aerobicos || [];
+      estado.abdominais = dados.abdominais || [];
+      estado.alimentacoes = dados.alimentacoes || [];
+      estado.perfil = dados.perfil || null;
       estado.catalogoPersonalizado = dados.catalogoPersonalizado || null;
       aplicarCatalogoSalvo();
       return estado;
@@ -411,6 +417,94 @@ const Dados = (function () {
     };
   }
 
+  // ---- Abdômen (prancha, abdominal, etc — por repetições ou por tempo) ----
+  function listarAbdominais() {
+    const e = carregar();
+    return e.abdominais.slice().sort(function (a, b) { return (b.data + b.id) < (a.data + a.id) ? -1 : 1; });
+  }
+
+  function addAbdominal(registro) {
+    const e = carregar();
+    const novo = Object.assign({ id: Date.now() + '-' + Math.floor(Math.random() * 1000) }, registro);
+    e.abdominais.push(novo);
+    salvar();
+    return novo;
+  }
+
+  function atualizarAbdominal(id, dadosNovos) {
+    const e = carregar();
+    const idx = e.abdominais.findIndex(function (a) { return a.id === id; });
+    if (idx === -1) return;
+    e.abdominais[idx] = Object.assign({}, e.abdominais[idx], dadosNovos);
+    salvar();
+  }
+
+  function removerAbdominal(id) {
+    const e = carregar();
+    e.abdominais = e.abdominais.filter(function (a) { return a.id !== id; });
+    salvar();
+  }
+
+  function resumoAbdominalEntre(dataInicioISO, dataFimISO) {
+    const e = carregar();
+    const itens = e.abdominais.filter(function (a) { return a.data >= dataInicioISO && a.data <= dataFimISO; });
+    return { sessoes: itens.length };
+  }
+
+  // ---- Alimentação ----
+  function listarAlimentacoes() {
+    const e = carregar();
+    return e.alimentacoes.slice().sort(function (a, b) { return (b.data + b.id) < (a.data + a.id) ? -1 : 1; });
+  }
+
+  function addAlimentacao(registro) {
+    const e = carregar();
+    const novo = Object.assign({ id: Date.now() + '-' + Math.floor(Math.random() * 1000) }, registro);
+    e.alimentacoes.push(novo);
+    salvar();
+    return novo;
+  }
+
+  function atualizarAlimentacao(id, dadosNovos) {
+    const e = carregar();
+    const idx = e.alimentacoes.findIndex(function (a) { return a.id === id; });
+    if (idx === -1) return;
+    e.alimentacoes[idx] = Object.assign({}, e.alimentacoes[idx], dadosNovos);
+    salvar();
+  }
+
+  function removerAlimentacao(id) {
+    const e = carregar();
+    e.alimentacoes = e.alimentacoes.filter(function (a) { return a.id !== id; });
+    salvar();
+  }
+
+  function caloriasNoDia(dataISO) {
+    const e = carregar();
+    return e.alimentacoes
+      .filter(function (a) { return a.data === dataISO; })
+      .reduce(function (s, a) { return s + Number(a.calorias || 0); }, 0);
+  }
+
+  // ---- Perfil e TMB (Taxa Metabólica Basal) ----
+  // Fórmula de Mifflin-St Jeor — peso em kg, altura em cm, idade em anos.
+  function calcularTMB(peso, altura, idade, sexo) {
+    const base = 10 * peso + 6.25 * altura - 5 * idade;
+    return Math.round(sexo === 'feminino' ? base - 161 : base + 5);
+  }
+
+  function getPerfil() {
+    return carregar().perfil;
+  }
+
+  function salvarPerfil(dados) {
+    const e = carregar();
+    const tmb = calcularTMB(dados.peso, dados.altura, dados.idade, dados.sexo);
+    e.perfil = { peso: dados.peso, altura: dados.altura, idade: dados.idade, sexo: dados.sexo, tmb: tmb };
+    salvar();
+    return e.perfil;
+  }
+
   // ---- Backup ----
   function exportarJSON() {
     return JSON.stringify(carregar(), null, 2);
@@ -424,6 +518,9 @@ const Dados = (function () {
     estado.pesos = novo.pesos || {};
     estado.historico = novo.historico || [];
     estado.aerobicos = novo.aerobicos || [];
+    estado.abdominais = novo.abdominais || [];
+    estado.alimentacoes = novo.alimentacoes || [];
+    estado.perfil = novo.perfil || null;
     estado.catalogoPersonalizado = novo.catalogoPersonalizado || null;
     if (estado.catalogoPersonalizado) aplicarCatalogoSalvo();
     else resetarCatalogoParaPadrao();
@@ -459,6 +556,19 @@ const Dados = (function () {
     atualizarAerobico: atualizarAerobico,
     removerAerobico: removerAerobico,
     resumoAerobicoEntre: resumoAerobicoEntre,
+    listarAbdominais: listarAbdominais,
+    addAbdominal: addAbdominal,
+    atualizarAbdominal: atualizarAbdominal,
+    removerAbdominal: removerAbdominal,
+    resumoAbdominalEntre: resumoAbdominalEntre,
+    listarAlimentacoes: listarAlimentacoes,
+    addAlimentacao: addAlimentacao,
+    atualizarAlimentacao: atualizarAlimentacao,
+    removerAlimentacao: removerAlimentacao,
+    caloriasNoDia: caloriasNoDia,
+    calcularTMB: calcularTMB,
+    getPerfil: getPerfil,
+    salvarPerfil: salvarPerfil,
     editarExercicio: editarExercicio,
     adicionarExercicio: adicionarExercicio,
     removerExercicioDoDia: removerExercicioDoDia,

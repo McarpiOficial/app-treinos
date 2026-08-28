@@ -5,7 +5,7 @@ const App = (function () {
   // Mostrada em Progresso > Ajustes, para o usuário conseguir CONFIRMAR pelo
   // olho que uma atualização chegou, sem depender de nenhum mecanismo
   // automático. Bumpar junto com CACHE em sw.js a cada mudança publicada.
-  const VERSAO_APP = 'v13';
+  const VERSAO_APP = 'v14';
 
   let telaAtual = 'semana';
   let diaEmVisualizacao = null;
@@ -63,6 +63,8 @@ const App = (function () {
     if (tela === 'semana') renderSemana();
     else if (tela === 'treino') renderTreino(params && params.diaId != null ? params.diaId : diaEmVisualizacao);
     else if (tela === 'aerobico') Aerobico.render();
+    else if (tela === 'abdominal') Abdominal.render();
+    else if (tela === 'alimentacao') Alimentacao.render();
     else if (tela === 'progresso') renderProgresso();
   }
 
@@ -375,6 +377,7 @@ const App = (function () {
     el('treino-dia-foco').textContent = dia.foco.toUpperCase();
     const prog = Dados.progressoDia(diaId);
     el('treino-dia-sub').textContent = prog.feitas + ' de ' + prog.total + ' séries feitas nesta semana';
+    atualizarContadorExercicios(diaId);
 
     const lista = el('lista-exercicios');
     lista.innerHTML = '';
@@ -486,6 +489,23 @@ const App = (function () {
     const diaId = diaEmVisualizacao;
     const prog = Dados.progressoDia(diaId);
     el('treino-dia-sub').textContent = prog.feitas + ' de ' + prog.total + ' séries feitas nesta semana';
+    atualizarContadorExercicios(diaId);
+  }
+
+  // Um exercício conta como "feito" quando todas as suas séries estão
+  // marcadas — é isso que decresce o contador conforme o treino avança.
+  function atualizarContadorExercicios(diaId) {
+    const dia = diaPorId(diaId);
+    if (!dia) return;
+    const restantes = dia.exercicios.filter(function (exId) {
+      const s = Dados.getSeries(diaId, exId);
+      return !s.length || s.some(function (feita) { return !feita; });
+    }).length;
+    const badge = el('treino-contador-restantes');
+    badge.textContent = restantes === 0
+      ? 'Todos os exercícios concluídos ✔'
+      : restantes + ' de ' + dia.exercicios.length + ' exercícios restantes';
+    badge.classList.toggle('tudo-feito', restantes === 0);
   }
 
   function aoClicarConcluirTreino() {
@@ -806,6 +826,85 @@ const App = (function () {
         listaSemanas.appendChild(li);
       });
     }
+
+    preencherListaSimples('lista-historico-aerobico', Dados.listarAerobicos().slice(0, 20), function (r) {
+      return { esquerda: r.tipo + ' · ' + r.minutos + ' min', direita: fmtData(r.data) };
+    }, 'Nenhum aeróbico registrado ainda.');
+
+    preencherListaSimples('lista-historico-abdominal', Dados.listarAbdominais().slice(0, 20), function (r) {
+      const valor = r.modo === 'tempo' ? fmtCronometro(r.valor) + ' min' : r.valor + ' repetições';
+      return { esquerda: r.exercicio + ' · ' + valor, direita: fmtData(r.data) };
+    }, 'Nenhum abdômen registrado ainda.');
+
+    preencherListaSimples('lista-historico-alimentacao', Dados.listarAlimentacoes().slice(0, 20), function (r) {
+      return { esquerda: r.descricao, direita: Math.round(r.calorias || 0) + ' kcal · ' + fmtData(r.data) };
+    }, 'Nenhuma alimentação registrada ainda.');
+
+    atualizarResultadoTMB();
+  }
+
+  function fmtCronometro(seg) {
+    const m = Math.floor(seg / 60), s = seg % 60;
+    return m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
+  // Preenche uma <ul class="lista-simples"> genérica a partir de uma lista de
+  // registros — usado pelos 3 históricos de Progresso (aeróbico/abdômen/
+  // alimentação), que só diferem no texto de cada linha.
+  function preencherListaSimples(idLista, registros, formatar, mensagemVazia) {
+    const ul = el(idLista);
+    ul.innerHTML = '';
+    if (!registros.length) { ul.innerHTML = '<li>' + mensagemVazia + '</li>'; return; }
+    registros.forEach(function (r) {
+      const f = formatar(r);
+      const li = document.createElement('li');
+      li.innerHTML = '<span>' + f.esquerda + '</span><span>' + f.direita + '</span>';
+      ul.appendChild(li);
+    });
+  }
+
+  // ---- Calculadora de TMB (Taxa Metabólica Basal) ----
+  let sexoSelecionadoTMB = null;
+
+  function configurarCalculadoraTMB() {
+    Array.from(el('chips-tmb-sexo').children).forEach(function (chip) {
+      chip.onclick = function () {
+        sexoSelecionadoTMB = chip.dataset.sexo;
+        Array.from(el('chips-tmb-sexo').children).forEach(function (c) { c.classList.remove('selecionado'); });
+        chip.classList.add('selecionado');
+      };
+    });
+
+    const perfil = Dados.getPerfil();
+    if (perfil) {
+      el('input-tmb-peso').value = perfil.peso;
+      el('input-tmb-altura').value = perfil.altura;
+      el('input-tmb-idade').value = perfil.idade;
+      sexoSelecionadoTMB = perfil.sexo;
+      const chip = Array.from(el('chips-tmb-sexo').children).find(function (c) { return c.dataset.sexo === perfil.sexo; });
+      if (chip) chip.classList.add('selecionado');
+    }
+
+    el('btn-calcular-tmb').onclick = function () {
+      const peso = parseFloat(el('input-tmb-peso').value);
+      const altura = parseFloat(el('input-tmb-altura').value);
+      const idade = parseFloat(el('input-tmb-idade').value);
+      if (!peso || !altura || !idade || !sexoSelecionadoTMB) {
+        avisar('Preencha peso, altura, idade e sexo.');
+        return;
+      }
+      Dados.salvarPerfil({ peso: peso, altura: altura, idade: idade, sexo: sexoSelecionadoTMB });
+      atualizarResultadoTMB();
+      avisar('TMB calculado!');
+    };
+  }
+
+  function atualizarResultadoTMB() {
+    const perfil = Dados.getPerfil();
+    const resultado = el('tmb-resultado');
+    if (!perfil) { resultado.style.display = 'none'; return; }
+    resultado.style.display = 'block';
+    el('tmb-valor').textContent = perfil.tmb;
   }
 
   function renderGraficoProgresso() {
@@ -917,6 +1016,9 @@ const App = (function () {
     configurarModalExercicio();
     el('btn-adicionar-exercicio').onclick = function () { abrirModalExercicio(diaEmVisualizacao, null); };
     Aerobico.init();
+    Abdominal.init();
+    Alimentacao.init();
+    configurarCalculadoraTMB();
 
     if ('serviceWorker' in navigator) {
       // Quando sai uma versão nova do app, o service worker novo assume o
