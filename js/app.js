@@ -5,7 +5,7 @@ const App = (function () {
   // Mostrada em Progresso > Ajustes, para o usuário conseguir CONFIRMAR pelo
   // olho que uma atualização chegou, sem depender de nenhum mecanismo
   // automático. Bumpar junto com CACHE em sw.js a cada mudança publicada.
-  const VERSAO_APP = 'v20';
+  const VERSAO_APP = 'v21';
 
   let telaAtual = 'semana';
   let diaEmVisualizacao = null;
