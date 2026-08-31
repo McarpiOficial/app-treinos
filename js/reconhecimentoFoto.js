@@ -9,7 +9,7 @@
 // abaixo), de propósito: assim ela nunca entra no backup exportado.
 const ReconhecimentoFoto = (function () {
   const CHAVE_KEY = 'treinos.geminiKey'; // separada de "treinos.v1" — nunca vai no backup
-  const MODELO = 'gemini-2.5-flash'; // multimodal, tem cota gratuita generosa
+  const MODELO = 'gemini-3.6-flash'; // multimodal, tem cota gratuita generosa
 
   const PROMPT =
     'Analise esta foto de uma refeição ou alimento. Identifique os itens visíveis e estime as ' +
