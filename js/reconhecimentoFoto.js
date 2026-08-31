@@ -35,19 +35,39 @@ const ReconhecimentoFoto = (function () {
     return !!getChave();
   }
 
-  // Lê um arquivo de imagem (File) e devolve { base64, mimeType } — sem
-  // nunca escrever nada em disco/armazenamento, só em memória.
+  const LADO_MAXIMO = 1280; // px — reduz o peso do envio e normaliza o formato
+
+  // Lê um arquivo de imagem (File), redesenha num canvas (redimensionando se
+  // for muito grande) e devolve { base64, mimeType } sempre como JPEG — sem
+  // nunca escrever nada em disco/armazenamento, só em memória. Passar pelo
+  // canvas também evita formatos que a API não aceita bem (ex.: HEIC do
+  // iPhone) e deixa o envio mais rápido em fotos de câmeras de muitos MP.
   function arquivoParaBase64(arquivo) {
     return new Promise(function (resolve, reject) {
-      const leitor = new FileReader();
-      leitor.onload = function () {
-        // leitor.result é algo como "data:image/jpeg;base64,AAAA..." — só
-        // a parte depois da vírgula interessa pra API.
-        const virgula = leitor.result.indexOf(',');
-        resolve({ base64: leitor.result.slice(virgula + 1), mimeType: arquivo.type || 'image/jpeg' });
+      const url = URL.createObjectURL(arquivo);
+      const img = new Image();
+      img.onload = function () {
+        URL.revokeObjectURL(url);
+        let largura = img.naturalWidth, altura = img.naturalHeight;
+        if (!largura || !altura) { reject(new Error('Não foi possível ler essa foto — tente outra.')); return; }
+        if (largura > LADO_MAXIMO || altura > LADO_MAXIMO) {
+          const escala = LADO_MAXIMO / Math.max(largura, altura);
+          largura = Math.round(largura * escala);
+          altura = Math.round(altura * escala);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = largura;
+        canvas.height = altura;
+        canvas.getContext('2d').drawImage(img, 0, 0, largura, altura);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        const virgula = dataUrl.indexOf(',');
+        resolve({ base64: dataUrl.slice(virgula + 1), mimeType: 'image/jpeg' });
       };
-      leitor.onerror = function () { reject(new Error('Não foi possível ler a foto.')); };
-      leitor.readAsDataURL(arquivo);
+      img.onerror = function () {
+        URL.revokeObjectURL(url);
+        reject(new Error('Não foi possível abrir essa foto — tente outra ou tire uma nova.'));
+      };
+      img.src = url;
     });
   }
 

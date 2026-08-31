@@ -58,8 +58,9 @@ const Alimentacao = (function () {
       el('input-calorias-alimentacao').value = resultado.caloriasTotal || '';
       status.textContent = 'Da foto: ' + (nomes || resultado.descricao) + '. Confira as calorias antes de registrar.';
     }).catch(function (erro) {
-      status.textContent = '';
-      App.avisar(erro.message || 'Não foi possível analisar a foto.');
+      const msg = erro.message || 'Não foi possível analisar a foto.';
+      status.textContent = '⚠️ ' + msg;
+      App.avisar(msg);
     }).finally(function () {
       botao.disabled = false;
     });
