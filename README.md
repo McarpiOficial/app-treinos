@@ -48,12 +48,15 @@ dados ficam salvos só no aparelho** (localStorage), sem servidor e sem login.
   de alimentos comuns (a estimativa aparece antes de salvar e pode ser
   ajustada à mão). Mostra o total de calorias comidas hoje e, se o TMB
   estiver calculado (em Progresso), o saldo do dia (TMB − comido). Histórico
-  agrupado por dia, com o total de cada dia.
+  agrupado por dia, com o total de cada dia. **Esse resumo (kcal comidas ·
+  TMB · saldo) fica fixo no topo de toda tela do app** — não precisa abrir
+  Alimentação para conferir.
 - **Progresso**: gráfico de evolução de carga por exercício; histórico
   separado por tipo (musculação, aeróbico, abdômen, alimentação); calculadora
   de TMB (Taxa Metabólica Basal — fórmula de Mifflin-St Jeor, a partir de
-  peso/altura/idade/sexo) cujo resultado alimenta o saldo mostrado em
-  Alimentação; e backup (exportar/importar `.json`).
+  peso/altura/idade/sexo — a altura é em **centímetros**, ex.: 178) cujo
+  resultado alimenta o saldo mostrado em Alimentação e no topo de todas as
+  telas; e backup (exportar/importar `.json`).
 
 ## Como usar no celular
 

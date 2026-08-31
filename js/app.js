@@ -5,7 +5,7 @@ const App = (function () {
   // Mostrada em Progresso > Ajustes, para o usuário conseguir CONFIRMAR pelo
   // olho que uma atualização chegou, sem depender de nenhum mecanismo
   // automático. Bumpar junto com CACHE em sw.js a cada mudança publicada.
-  const VERSAO_APP = 'v15';
+  const VERSAO_APP = 'v16';
 
   let telaAtual = 'semana';
   let diaEmVisualizacao = null;
@@ -75,6 +75,25 @@ const App = (function () {
     else if (tela === 'abdominal') Abdominal.render();
     else if (tela === 'alimentacao') Alimentacao.render();
     else if (tela === 'progresso') renderProgresso();
+
+    atualizarBarraCalorias();
+  }
+
+  // Resumo de calorias/TMB/saldo do dia — fica no topo de toda tela (ver
+  // #barra-calorias em index.html, fora de qualquer .tela), atualizado a
+  // cada troca de aba e a cada mudança em Alimentação ou no TMB.
+  function atualizarBarraCalorias() {
+    const alvo = el('barra-calorias-texto');
+    const consumidas = Math.round(Dados.caloriasNoDia(Dados.hoje()));
+    const perfil = Dados.getPerfil();
+    if (!perfil) {
+      alvo.innerHTML = '🍽️ <strong>' + consumidas + '</strong> kcal comidas hoje &nbsp;·&nbsp; calcule seu TMB em Progresso';
+      return;
+    }
+    const saldo = Math.round(perfil.tmb - consumidas);
+    const classe = saldo >= 0 ? 'saldo-pos' : 'saldo-neg';
+    alvo.innerHTML = '🍽️ <strong>' + consumidas + '</strong> kcal &nbsp;·&nbsp; TMB <strong>' + perfil.tmb + '</strong>'
+      + ' &nbsp;·&nbsp; Saldo <span class="' + classe + '">' + (saldo > 0 ? '+' : '') + saldo + '</span>';
   }
 
   function abrirDia(diaId) {
@@ -914,8 +933,16 @@ const App = (function () {
         avisar('Preencha peso, altura, idade e sexo.');
         return;
       }
+      // O campo de altura é em CENTÍMETROS — digitar em metros (ex.: "1,78",
+      // que o campo numérico só lê até a vírgula e vira "1") gerava um TMB
+      // muito baixo sem nenhum aviso. Isso avisa em vez de calcular errado.
+      if (altura < 3) {
+        avisar('Altura muito baixa — o campo é em centímetros (ex.: 178, não 1,78).');
+        return;
+      }
       Dados.salvarPerfil({ peso: peso, altura: altura, idade: idade, sexo: sexoSelecionadoTMB });
       atualizarResultadoTMB();
+      atualizarBarraCalorias();
       avisar('TMB calculado!');
     };
   }
@@ -1119,7 +1146,8 @@ const App = (function () {
     confirmar: confirmar,
     fmtPeso: fmtPeso,
     fmtData: fmtData,
-    proximoDiaPendente: proximoDiaPendente
+    proximoDiaPendente: proximoDiaPendente,
+    atualizarBarraCalorias: atualizarBarraCalorias
   };
 })();
 

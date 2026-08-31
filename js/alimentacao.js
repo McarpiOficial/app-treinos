@@ -169,6 +169,7 @@ const Alimentacao = (function () {
 
   function render() {
     renderResumoDia();
+    App.atualizarBarraCalorias(); // mantém a barra visível em toda tela em dia
 
     const registros = Dados.listarAlimentacoes();
     const lista = el('lista-alimentacoes');
