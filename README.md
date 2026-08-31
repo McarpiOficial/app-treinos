@@ -44,7 +44,9 @@ dados ficam salvos só no aparelho** (localStorage), sem servidor e sem login.
   zero, com vibração no fim.
 - **Alimentação**: descreva o que comeu — **digitando, ditando por voz** 🎤
   (com fallback automático para digitar se o navegador não suportar ou a
-  transcrição errar) **ou por foto** 📷 — e o app estima as calorias. Texto e
+  transcrição errar) **ou por foto** 📷 (tirada na hora ou escolhida da
+  galeria — útil para uma foto do almoço/jantar registrada depois) — e o
+  app estima as calorias. Texto e
   voz usam um dicionário local de alimentos comuns, sem depender de internet.
   A foto usa a API gratuita do Google Gemini (opcional — configure sua
   própria chave em Progresso > Ajustes, grátis em aistudio.google.com/apikey):
