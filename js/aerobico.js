@@ -34,6 +34,21 @@ const Aerobico = (function () {
       salvar();
     };
     el('btn-cancelar-edicao-aerobico').onclick = cancelarEdicao;
+    el('input-calorias-aerobico').oninput = atualizarEstimativaCalorias;
+    el('input-minutos-manual').oninput = atualizarEstimativaCalorias;
+  }
+
+  // Se o usuário não informar as calorias, o app estima por MET (tipo de
+  // treino + tempo + peso corporal, do TMB se já calculado). Mostrar essa
+  // conta antes de salvar evita que o valor usado no saldo pareça "mágico".
+  function atualizarEstimativaCalorias() {
+    const dica = el('aerobico-calorias-estimativa');
+    if (parseFloat(el('input-calorias-aerobico').value) > 0) { dica.textContent = ''; return; }
+    const tipo = tipoSelecionado;
+    const minutos = minutosFinal();
+    if (!tipo || !minutos) { dica.textContent = ''; return; }
+    const estimativa = Dados.estimarCaloriasAerobico(tipo, minutos);
+    dica.textContent = 'Sem informar, entra como ~' + estimativa + ' kcal (estimativa por tipo e tempo).';
   }
 
   function selecionarTipo(tipo, chipEl) {
@@ -46,6 +61,7 @@ const Aerobico = (function () {
     } else {
       el('input-tipo-outro').style.display = 'none';
     }
+    atualizarEstimativaCalorias();
   }
 
   function selecionarMinutos(min, chipEl) {
@@ -53,6 +69,7 @@ const Aerobico = (function () {
     Array.from(el('chips-tempo-aerobico').children).forEach(function (c) { c.classList.remove('selecionado'); });
     chipEl.classList.add('selecionado');
     el('input-minutos-manual').value = '';
+    atualizarEstimativaCalorias();
   }
 
   function tipoFinal() {
@@ -96,6 +113,7 @@ const Aerobico = (function () {
     el('input-tipo-outro').value = '';
     el('input-minutos-manual').value = '';
     el('input-calorias-aerobico').value = '';
+    el('aerobico-calorias-estimativa').textContent = '';
     el('input-data-aerobico').value = Dados.hoje();
     el('titulo-form-aerobico').textContent = 'Registrar aeróbico';
     el('btn-salvar-aerobico').textContent = 'Registrar';
@@ -133,6 +151,7 @@ const Aerobico = (function () {
   }
 
   function render() {
+    App.atualizarBarraCalorias(); // aeróbico de hoje entra no saldo do topo
     const registros = Dados.listarAerobicos();
 
     const hoje = Dados.hoje();

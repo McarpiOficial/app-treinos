@@ -136,12 +136,14 @@ const Alimentacao = (function () {
     }, 'Excluir');
   }
 
-  // ---- Resumo do dia (TMB - consumido) ----
+  // ---- Resumo do dia (TMB + queimado no treino - consumido) ----
   function renderResumoDia() {
     const perfil = Dados.getPerfil();
     const hoje = Dados.hoje();
     const consumidasHoje = Dados.caloriasNoDia(hoje);
+    const queimadasHoje = Dados.caloriasQueimadasNoDia(hoje);
     el('alimentacao-consumidas-hoje').textContent = Math.round(consumidasHoje);
+    el('alimentacao-queimadas-hoje').textContent = Math.round(queimadasHoje);
 
     if (!perfil) {
       el('alimentacao-tmb').textContent = '—';
@@ -151,7 +153,7 @@ const Alimentacao = (function () {
     }
     el('alimentacao-sem-tmb').style.display = 'none';
     el('alimentacao-tmb').textContent = perfil.tmb;
-    const saldo = Math.round(perfil.tmb - consumidasHoje);
+    const saldo = Math.round(perfil.tmb + queimadasHoje - consumidasHoje);
     const saldoEl = el('alimentacao-saldo');
     saldoEl.textContent = (saldo > 0 ? '+' : '') + saldo;
     saldoEl.classList.toggle('delta-pos', saldo >= 0);

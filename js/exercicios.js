@@ -89,6 +89,25 @@ function chaveTreino(diaId, exercicioId) {
   return diaId + ':' + exercicioId;
 }
 
+// O campo de peso aceita texto livre ("7 tijolos", para aparelhos que não
+// marcam a carga em kg) — isso só retorna um número quando o valor É
+// puramente numérico, para saber quando dá pra fazer conta (delta da semana
+// passada, gráfico de progresso, estimativa de calorias) e quando é só
+// texto de referência. Compartilhado entre js/app.js e js/dados.js.
+function pesoNumerico(v) {
+  if (v == null) return null;
+  const s = String(v).trim().replace(',', '.');
+  return /^-?\d+(\.\d+)?$/.test(s) ? parseFloat(s) : null;
+}
+
+// Extrai um número representativo de um texto de repetições como "10 a 12"
+// (média) ou "12" (o próprio valor) — usado na estimativa de calorias.
+function mediaRepsDoTexto(reps) {
+  const nums = String(reps || '').match(/\d+/g);
+  if (!nums || !nums.length) return 10;
+  return nums.map(Number).reduce(function (a, b) { return a + b; }, 0) / nums.length;
+}
+
 function diaPorId(diaId) {
   return CATALOGO.dias.find(function (d) { return d.id === Number(diaId); });
 }

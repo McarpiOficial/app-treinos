@@ -424,8 +424,72 @@ const Dados = (function () {
     return {
       sessoes: itens.length,
       minutos: itens.reduce(function (s, a) { return s + Number(a.minutos || 0); }, 0),
-      calorias: itens.reduce(function (s, a) { return s + Number(a.calorias || 0); }, 0)
+      calorias: itens.reduce(function (s, a) { return s + caloriasDeUmAerobico(a); }, 0)
     };
+  }
+
+  // ---- Calorias gastas no treino (estimativa, para somar no saldo do dia) ----
+  // Aeróbico: usa a calorias informada pelo usuário se ela existir; senão
+  // estima por MET (equivalente metabólico) — fórmula padrão de educação
+  // física: kcal/min = MET × 3,5 × peso corporal (kg) / 200.
+  const MET_AEROBICO = {
+    'Spinning': 8.5, 'Esteira': 7, 'Bike': 7.5, 'Elíptico': 5, 'Corrida': 9.8,
+    'Caminhada': 3.8, 'Escada': 8, 'Natação': 7
+  };
+  const PESO_CORPORAL_PADRAO = 70; // kg — só usado se o TMB ainda não foi calculado (sem peso salvo)
+
+  function pesoCorporalAtual() {
+    const perfil = getPerfil();
+    return (perfil && perfil.peso) ? perfil.peso : PESO_CORPORAL_PADRAO;
+  }
+
+  function estimarCaloriasAerobico(tipo, minutos) {
+    const met = MET_AEROBICO[tipo] || 6; // "Outro"/tipo não mapeado: MET moderado genérico
+    return Math.round(met * 3.5 * pesoCorporalAtual() / 200 * (minutos || 0));
+  }
+
+  function caloriasDeUmAerobico(registro) {
+    const informada = Number(registro.calorias);
+    return informada > 0 ? informada : estimarCaloriasAerobico(registro.tipo, registro.minutos);
+  }
+
+  // Musculação: não tem como medir de verdade sem um sensor, mas dá pra
+  // aproximar pelo volume de trabalho (carga × repetições) — heurística, não
+  // clínica, calibrada para dar uma ordem de grandeza plausível por sessão
+  // (não uma medição precisa). Peso em texto (ex.: "7 tijolos") usa um peso
+  // padrão de referência, já que não dá pra fazer conta com ele.
+  const FATOR_CALORIA_MUSCULACAO = 0.03; // kcal aproximada por kg × repetição
+  const PESO_PADRAO_SEM_NUMERO = 20; // kg — usado quando o peso é só texto
+
+  function caloriasDeUmExercicioMusculacao(pesoRegistrado, info) {
+    const pesoNum = pesoNumerico(pesoRegistrado);
+    const pesoUsado = pesoNum != null ? pesoNum : PESO_PADRAO_SEM_NUMERO;
+    const reps = mediaRepsDoTexto(info && info.reps);
+    const series = (info && info.series) || 3;
+    return Math.round(pesoUsado * reps * series * FATOR_CALORIA_MUSCULACAO);
+  }
+
+  // Soma aeróbico + musculação de um dia específico (histórico de treinos
+  // concluídos, já que é ali que fica a data e o peso usado naquele dia).
+  function caloriasQueimadasNoDia(dataISO) {
+    const e = carregar();
+    let total = 0;
+
+    e.aerobicos.filter(function (a) { return a.data === dataISO; }).forEach(function (a) {
+      total += caloriasDeUmAerobico(a);
+    });
+
+    e.historico.filter(function (h) { return h.data === dataISO; }).forEach(function (h) {
+      Object.keys(h.pesos).forEach(function (chave) {
+        const exId = chave.split(':')[1];
+        // O exercício pode já ter sido removido/editado desde então — nesse
+        // caso assume um padrão razoável em vez de deixar de contar.
+        const info = CATALOGO.exercicios[exId] || { series: 3, reps: '10' };
+        total += caloriasDeUmExercicioMusculacao(h.pesos[chave], info);
+      });
+    });
+
+    return Math.round(total);
   }
 
   // ---- Abdômen (prancha, abdominal, etc — por repetições ou por tempo) ----
@@ -567,6 +631,8 @@ const Dados = (function () {
     atualizarAerobico: atualizarAerobico,
     removerAerobico: removerAerobico,
     resumoAerobicoEntre: resumoAerobicoEntre,
+    estimarCaloriasAerobico: estimarCaloriasAerobico,
+    caloriasQueimadasNoDia: caloriasQueimadasNoDia,
     listarAbdominais: listarAbdominais,
     addAbdominal: addAbdominal,
     atualizarAbdominal: atualizarAbdominal,

@@ -5,7 +5,7 @@ const App = (function () {
   // Mostrada em Progresso > Ajustes, para o usuário conseguir CONFIRMAR pelo
   // olho que uma atualização chegou, sem depender de nenhum mecanismo
   // automático. Bumpar junto com CACHE em sw.js a cada mudança publicada.
-  const VERSAO_APP = 'v16';
+  const VERSAO_APP = 'v17';
 
   let telaAtual = 'semana';
   let diaEmVisualizacao = null;
@@ -17,15 +17,6 @@ const App = (function () {
   function fmtPeso(v) {
     if (v == null) return '—';
     return (Math.round(v * 10) / 10).toString().replace('.', ',');
-  }
-  // O campo de peso aceita texto livre ("7 tijolos", para aparelhos que não
-  // marcam a carga em kg) — isso só retorna um número quando o valor É
-  // puramente numérico, para saber quando dá pra fazer conta (delta da
-  // semana passada, gráfico de progresso) e quando é só texto de referência.
-  function pesoNumerico(v) {
-    if (v == null) return null;
-    const s = String(v).trim().replace(',', '.');
-    return /^-?\d+(\.\d+)?$/.test(s) ? parseFloat(s) : null;
   }
   function fmtData(iso) {
     const p = iso.split('-');
@@ -84,15 +75,21 @@ const App = (function () {
   // cada troca de aba e a cada mudança em Alimentação ou no TMB.
   function atualizarBarraCalorias() {
     const alvo = el('barra-calorias-texto');
-    const consumidas = Math.round(Dados.caloriasNoDia(Dados.hoje()));
+    const hoje = Dados.hoje();
+    const consumidas = Math.round(Dados.caloriasNoDia(hoje));
+    // Queimadas no treino só aparecem depois de "Concluir treino do dia" (é
+    // o momento em que o peso usado fica registrado com a data de hoje) —
+    // marcar séries sem concluir ainda não soma aqui.
+    const queimadas = Math.round(Dados.caloriasQueimadasNoDia(hoje));
     const perfil = Dados.getPerfil();
+    const sufixoQueimadas = queimadas ? ' &nbsp;·&nbsp; 🔥 <strong>' + queimadas + '</strong> kcal treino' : '';
     if (!perfil) {
-      alvo.innerHTML = '🍽️ <strong>' + consumidas + '</strong> kcal comidas hoje &nbsp;·&nbsp; calcule seu TMB em Progresso';
+      alvo.innerHTML = '🍽️ <strong>' + consumidas + '</strong> kcal comidas' + sufixoQueimadas + ' &nbsp;·&nbsp; calcule seu TMB em Progresso';
       return;
     }
-    const saldo = Math.round(perfil.tmb - consumidas);
+    const saldo = Math.round(perfil.tmb + queimadas - consumidas);
     const classe = saldo >= 0 ? 'saldo-pos' : 'saldo-neg';
-    alvo.innerHTML = '🍽️ <strong>' + consumidas + '</strong> kcal &nbsp;·&nbsp; TMB <strong>' + perfil.tmb + '</strong>'
+    alvo.innerHTML = '🍽️ <strong>' + consumidas + '</strong> kcal' + sufixoQueimadas + ' &nbsp;·&nbsp; TMB <strong>' + perfil.tmb + '</strong>'
       + ' &nbsp;·&nbsp; Saldo <span class="' + classe + '">' + (saldo > 0 ? '+' : '') + saldo + '</span>';
   }
 
@@ -560,6 +557,7 @@ const App = (function () {
       Dados.concluirDia(diaId);
       avisar('Treino do Dia ' + dia.id + ' registrado!');
       renderTreino(diaId);
+      atualizarBarraCalorias();
     }, 'Concluir treino');
   }
 

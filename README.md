@@ -47,10 +47,16 @@ dados ficam salvos só no aparelho** (localStorage), sem servidor e sem login.
   a transcrição errar) — e o app estima as calorias por um dicionário local
   de alimentos comuns (a estimativa aparece antes de salvar e pode ser
   ajustada à mão). Mostra o total de calorias comidas hoje e, se o TMB
-  estiver calculado (em Progresso), o saldo do dia (TMB − comido). Histórico
-  agrupado por dia, com o total de cada dia. **Esse resumo (kcal comidas ·
-  TMB · saldo) fica fixo no topo de toda tela do app** — não precisa abrir
-  Alimentação para conferir.
+  estiver calculado (em Progresso), o saldo do dia — **agora somando também
+  as calorias gastas no treino**: no aeróbico, usa a calorias que você
+  informou, ou estima por tipo+tempo+peso corporal se deixar em branco (a
+  estimativa aparece antes de salvar); na musculação, estima pelo peso ×
+  repetições × séries de cada exercício concluído no dia (uma aproximação —
+  não tem como medir de verdade sem um sensor, mas já ajuda). Saldo = TMB +
+  queimado no treino − comido. Histórico agrupado por dia, com o total de
+  cada dia. **Esse resumo (kcal comidas · kcal treino · TMB · saldo) fica
+  fixo no topo de toda tela do app** — não precisa abrir Alimentação para
+  conferir.
 - **Progresso**: gráfico de evolução de carga por exercício; histórico
   separado por tipo (musculação, aeróbico, abdômen, alimentação); calculadora
   de TMB (Taxa Metabólica Basal — fórmula de Mifflin-St Jeor, a partir de
