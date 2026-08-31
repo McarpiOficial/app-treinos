@@ -10,9 +10,13 @@ dados ficam salvos só no aparelho** (localStorage), sem servidor e sem login.
   progresso dos treinos da semana atual.
 - **Treino do dia**: exercícios com ilustração (toque para ampliar em tela
   cheia, com pinça/duplo-toque), registro do peso usado (botões −/+ ou digitar)
-  e marcação das 3 séries. Um contador no topo mostra quantos exercícios
-  ainda faltam (um exercício "conta" quando todas as suas séries estão
-  marcadas) — decresce conforme o treino avança.
+  e marcação das 3 séries. **O peso da semana anterior já vem preenchido**
+  automaticamente (não precisa consultar nada) — e o campo aceita texto
+  livre, não só número: aparelho que marca a carga em "tijolos" ou outra
+  unidade própria pode ser registrado como "7 tijolos" (os botões −/+
+  ajustam só a parte numérica, preservando o texto). Um contador no topo
+  mostra quantos exercícios ainda faltam (um exercício "conta" quando todas
+  as suas séries estão marcadas) — decresce conforme o treino avança.
 - **Rotina flexível**: os dias de treino são agrupamentos que você cria,
   renomeia e exclui (✏️ no card do dia, ou "+ Novo dia de treino"). Um dia
   criado funciona igual aos originais: recebe exercícios, registra carga e

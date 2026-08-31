@@ -253,21 +253,32 @@ const Dados = (function () {
   }
 
   // ---- Peso por dia+exercício ----
+  // "Peso" é guardado como texto livre (não só número): além de kg
+  // ("40", "42.5"), aceita registros como "7 tijolos" para aparelhos que
+  // marcam a carga em unidades próprias. Ver pesoNumerico() em js/app.js
+  // para onde isso importa saber se dá para fazer conta com o valor.
   function getPeso(diaId, exercicioId) {
     const e = carregar();
     const chave = chaveTreino(diaId, exercicioId);
-    if (chave in e.pesos) return e.pesos[chave];
+    // Checagem por "!= null" (não por "in"): um campo que já foi apagado e
+    // ficou gravado como null não pode bloquear a sugestão do peso usado em
+    // outro dia — antes ficava preso em branco para sempre nesse dia.
+    if (e.pesos[chave] != null) return e.pesos[chave];
     // Sem registro para este dia: sugere o peso mais recente do mesmo exercício em outro dia.
     let sugestao = null;
     Object.keys(e.pesos).forEach(function (k) {
-      if (k.split(':')[1] === exercicioId) sugestao = e.pesos[k];
+      if (k.split(':')[1] === exercicioId && e.pesos[k] != null) sugestao = e.pesos[k];
     });
     return sugestao;
   }
 
   function setPeso(diaId, exercicioId, valor) {
     const e = carregar();
-    e.pesos[chaveTreino(diaId, exercicioId)] = valor;
+    const chave = chaveTreino(diaId, exercicioId);
+    // Campo vazio remove a chave (em vez de gravar null) — assim a sugestão
+    // de outro dia/semana continua disponível da próxima vez.
+    if (valor == null || valor === '') delete e.pesos[chave];
+    else e.pesos[chave] = valor;
     salvar();
   }
 

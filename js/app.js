@@ -5,7 +5,7 @@ const App = (function () {
   // Mostrada em Progresso > Ajustes, para o usuário conseguir CONFIRMAR pelo
   // olho que uma atualização chegou, sem depender de nenhum mecanismo
   // automático. Bumpar junto com CACHE em sw.js a cada mudança publicada.
-  const VERSAO_APP = 'v14';
+  const VERSAO_APP = 'v15';
 
   let telaAtual = 'semana';
   let diaEmVisualizacao = null;
@@ -17,6 +17,15 @@ const App = (function () {
   function fmtPeso(v) {
     if (v == null) return '—';
     return (Math.round(v * 10) / 10).toString().replace('.', ',');
+  }
+  // O campo de peso aceita texto livre ("7 tijolos", para aparelhos que não
+  // marcam a carga em kg) — isso só retorna um número quando o valor É
+  // puramente numérico, para saber quando dá pra fazer conta (delta da
+  // semana passada, gráfico de progresso) e quando é só texto de referência.
+  function pesoNumerico(v) {
+    if (v == null) return null;
+    const s = String(v).trim().replace(',', '.');
+    return /^-?\d+(\.\d+)?$/.test(s) ? parseFloat(s) : null;
   }
   function fmtData(iso) {
     const p = iso.split('-');
@@ -419,7 +428,7 @@ const App = (function () {
       + '<div class="bloco-peso">'
       + '  <button class="btn-peso" data-acao="menos">−</button>'
       + '  <div>'
-      + '    <input class="valor-peso" data-acao="valor" type="number" inputmode="decimal" step="0.5" value="' + (pesoAtual != null ? pesoAtual : '') + '" placeholder="0">'
+      + '    <input class="valor-peso" data-acao="valor" type="text" inputmode="decimal" enterkeyhint="done" autocomplete="off" value="' + (pesoAtual != null ? pesoAtual : '') + '" placeholder="Ex.: 40 ou 7 tijolos">'
       + '    <div class="valor-peso-unidade">kg</div>'
       + '  </div>'
       + '  <button class="btn-peso" data-acao="mais">+</button>'
@@ -432,29 +441,41 @@ const App = (function () {
     function atualizarDica() {
       const el2 = card.querySelector('[data-acao="dica"]');
       if (pesoAnterior == null) { el2.textContent = 'Primeiro registro deste exercício'; return; }
-      const atual = parseFloat(pesoInput().value) || 0;
-      const delta = Math.round((atual - pesoAnterior) * 10) / 10;
+      const atualNum = pesoNumerico(pesoInput().value);
+      const anteriorNum = pesoNumerico(pesoAnterior);
+      // Um dos dois não é um número puro (ex.: "7 tijolos") — não dá pra
+      // calcular diferença, mas o valor anterior continua útil como referência.
+      if (atualNum == null || anteriorNum == null) {
+        el2.textContent = 'Semana passada: ' + pesoAnterior;
+        return;
+      }
+      const delta = Math.round((atualNum - anteriorNum) * 10) / 10;
       const sinal = delta > 0 ? '▲ +' + fmtPeso(delta) : (delta < 0 ? '▼ ' + fmtPeso(delta) : '＝ igual');
       const classe = delta > 0 ? 'delta-pos' : (delta < 0 ? 'delta-neg' : '');
       el2.innerHTML = 'Semana passada: ' + fmtPeso(pesoAnterior) + ' kg &nbsp;·&nbsp; <span class="' + classe + '">' + sinal + '</span>';
     }
 
     function salvarPeso() {
-      const v = parseFloat(pesoInput().value);
-      Dados.setPeso(diaId, exId, isNaN(v) ? null : v);
+      const v = pesoInput().value.trim();
+      Dados.setPeso(diaId, exId, v === '' ? null : v);
       atualizarDica();
     }
 
-    card.querySelector('[data-acao="menos"]').onclick = function () {
-      const v = (parseFloat(pesoInput().value) || 0) - passo;
-      pesoInput().value = Math.max(0, Math.round(v * 10) / 10);
+    // O +/- ajusta só a parte NUMÉRICA no início do texto, preservando o que
+    // vem depois — assim "7 tijolos" vira "8 tijolos" num toque, em vez de
+    // obrigar a apagar e redigitar tudo.
+    function ajustarPeso(delta) {
+      const atual = pesoInput().value.trim();
+      const m = atual.match(/^(-?\d+(?:[.,]\d+)?)(.*)$/);
+      const numeroAtual = m ? parseFloat(m[1].replace(',', '.')) : 0;
+      const resto = m ? m[2] : (atual ? ' ' + atual : '');
+      const novoNumero = Math.max(0, Math.round((numeroAtual + delta) * 10) / 10);
+      pesoInput().value = fmtPeso(novoNumero).replace(',', '.') + resto;
       salvarPeso();
-    };
-    card.querySelector('[data-acao="mais"]').onclick = function () {
-      const v = (parseFloat(pesoInput().value) || 0) + passo;
-      pesoInput().value = Math.round(v * 10) / 10;
-      salvarPeso();
-    };
+    }
+
+    card.querySelector('[data-acao="menos"]').onclick = function () { ajustarPeso(-passo); };
+    card.querySelector('[data-acao="mais"]').onclick = function () { ajustarPeso(passo); };
     pesoInput().oninput = salvarPeso;
     card.querySelector('[data-acao="zoom"]').onclick = function () {
       abrirZoom(Dados.framesExercicio(exId), info.nome);
@@ -909,7 +930,13 @@ const App = (function () {
 
   function renderGraficoProgresso() {
     const exId = el('seletor-exercicio-progresso').value;
-    const pontos = Dados.historicoPorExercicio(exId).sort(function (a, b) { return a.semana - b.semana; });
+    // O peso agora aceita texto livre ("7 tijolos") — só dá pra desenhar no
+    // gráfico os registros que são um número puro (kg ou qualquer unidade
+    // numérica); o resto fica de fora do traçado, mas não quebra o gráfico.
+    const pontos = Dados.historicoPorExercicio(exId)
+      .filter(function (p) { return pesoNumerico(p.peso) != null; })
+      .map(function (p) { return Object.assign({}, p, { peso: pesoNumerico(p.peso) }); })
+      .sort(function (a, b) { return a.semana - b.semana; });
     const svg = el('grafico-progresso');
     if (pontos.length < 2) {
       svg.innerHTML = '<text x="10" y="90" fill="#9a9aa2" font-size="13">Registre pesos em pelo menos 2 semanas para ver o gráfico.</text>';

@@ -2,7 +2,7 @@
 // offline depois (dados continuam só no localStorage, isso aqui é só o "casco"
 // do app: HTML/CSS/JS/imagens). Caminhos relativos para funcionar também
 // dentro de uma subpasta no GitHub Pages (ex.: /app-treinos/).
-const CACHE = 'treinos-cache-v14';
+const CACHE = 'treinos-cache-v15';
 
 const ARQUIVOS = [
   './',
