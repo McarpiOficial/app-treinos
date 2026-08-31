@@ -2,7 +2,7 @@
 // offline depois (dados continuam só no localStorage, isso aqui é só o "casco"
 // do app: HTML/CSS/JS/imagens). Caminhos relativos para funcionar também
 // dentro de uma subpasta no GitHub Pages (ex.: /app-treinos/).
-const CACHE = 'treinos-cache-v17';
+const CACHE = 'treinos-cache-v18';
 
 const ARQUIVOS = [
   './',
@@ -16,6 +16,7 @@ const ARQUIVOS = [
   './js/aerobico.js',
   './js/abdominal.js',
   './js/alimentos.js',
+  './js/reconhecimentoFoto.js',
   './js/alimentacao.js',
   './js/app.js',
   './img/icone-192.png',

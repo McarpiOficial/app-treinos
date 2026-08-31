@@ -26,6 +26,43 @@ const Alimentacao = (function () {
     } else {
       btnMic.onclick = alternarMicrofone;
     }
+
+    el('btn-foto-alimentacao').onclick = function () { el('input-foto-alimentacao').click(); };
+    el('input-foto-alimentacao').onchange = aoEscolherFoto;
+  }
+
+  // ---- Reconhecimento por foto (API do Gemini, ver js/reconhecimentoFoto.js) ----
+  function aoEscolherFoto(ev) {
+    const arquivo = ev.target.files && ev.target.files[0];
+    ev.target.value = ''; // não guarda referência ao arquivo além do necessário
+    if (!arquivo) return;
+
+    if (!ReconhecimentoFoto.temChave()) {
+      App.avisar('Configure sua chave da API do Gemini em Progresso > Ajustes primeiro.');
+      return;
+    }
+
+    const status = el('foto-alimentacao-status');
+    const botao = el('btn-foto-alimentacao');
+    status.textContent = 'Analisando a foto...';
+    botao.disabled = true;
+
+    ReconhecimentoFoto.analisarFoto(arquivo).then(function (resultado) {
+      if (!resultado.itens.length && !resultado.caloriasTotal) {
+        status.textContent = 'Não reconheci nenhum alimento nessa foto — tente outra ou descreva por texto.';
+        return;
+      }
+      const campo = el('input-descricao-alimentacao');
+      const nomes = resultado.itens.map(function (i) { return i.nome; }).join(', ');
+      campo.value = (campo.value ? campo.value.trim() + ' + ' : '') + (resultado.descricao || nomes);
+      el('input-calorias-alimentacao').value = resultado.caloriasTotal || '';
+      status.textContent = 'Da foto: ' + (nomes || resultado.descricao) + '. Confira as calorias antes de registrar.';
+    }).catch(function (erro) {
+      status.textContent = '';
+      App.avisar(erro.message || 'Não foi possível analisar a foto.');
+    }).finally(function () {
+      botao.disabled = false;
+    });
   }
 
   // ---- Ditado por voz (Web Speech API) ----
@@ -106,6 +143,7 @@ const Alimentacao = (function () {
     el('input-descricao-alimentacao').value = '';
     el('input-calorias-alimentacao').value = '';
     el('itens-reconhecidos-alimentacao').textContent = '';
+    el('foto-alimentacao-status').textContent = '';
     el('input-data-alimentacao').value = Dados.hoje();
     el('titulo-form-alimentacao').textContent = 'Registrar alimentação';
     el('btn-salvar-alimentacao').textContent = 'Registrar';

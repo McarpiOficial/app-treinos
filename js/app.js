@@ -5,7 +5,7 @@ const App = (function () {
   // Mostrada em Progresso > Ajustes, para o usuário conseguir CONFIRMAR pelo
   // olho que uma atualização chegou, sem depender de nenhum mecanismo
   // automático. Bumpar junto com CACHE em sw.js a cada mudança publicada.
-  const VERSAO_APP = 'v17';
+  const VERSAO_APP = 'v18';
 
   let telaAtual = 'semana';
   let diaEmVisualizacao = null;
@@ -1071,6 +1071,7 @@ const App = (function () {
     Abdominal.init();
     Alimentacao.init();
     configurarCalculadoraTMB();
+    configurarChaveGemini();
 
     if ('serviceWorker' in navigator) {
       // Quando sai uma versão nova do app, o service worker novo assume o
@@ -1100,6 +1101,31 @@ const App = (function () {
           window.addEventListener('pageshow', function () { registro.update().catch(function () {}); });
         }).catch(function (e) { console.warn('SW não registrado:', e); });
       });
+    }
+
+    // Chave da API do Gemini (reconhecimento de comida por foto, em
+    // Alimentação) — guardada separada do resto dos dados (ver
+    // js/reconhecimentoFoto.js), então não aparece no backup exportado.
+    function configurarChaveGemini() {
+      const campo = el('input-chave-gemini');
+      if (ReconhecimentoFoto.temChave()) campo.placeholder = 'Chave já configurada — cole outra pra trocar';
+
+      el('btn-salvar-chave-gemini').onclick = function () {
+        const valor = campo.value.trim();
+        if (!valor) { avisar('Cole a chave antes de salvar.'); return; }
+        ReconhecimentoFoto.salvarChave(valor);
+        campo.value = '';
+        campo.placeholder = 'Chave já configurada — cole outra pra trocar';
+        avisar('Chave do Gemini salva neste aparelho.');
+      };
+
+      el('btn-remover-chave-gemini').onclick = function () {
+        confirmar('Remover a chave do Gemini deste aparelho? O reconhecimento por foto para de funcionar até você colar uma nova.', function () {
+          ReconhecimentoFoto.salvarChave(null);
+          campo.placeholder = 'Cole aqui sua chave da API do Gemini';
+          avisar('Chave removida.');
+        }, 'Remover');
+      };
     }
 
     // Botão manual em Ajustes: não depende de nenhum mecanismo automático —

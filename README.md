@@ -42,11 +42,16 @@ dados ficam salvos só no aparelho** (localStorage), sem servidor e sem login.
   **repetições** ou por **tempo** — para tempo, um cronômetro regressivo
   (chips de 15s a 90s, ou digitado) conta e registra sozinho ao chegar a
   zero, com vibração no fim.
-- **Alimentação**: descreva o que comeu — **digitando ou ditando por voz**
-  (🎤, com fallback automático para digitar se o navegador não suportar ou
-  a transcrição errar) — e o app estima as calorias por um dicionário local
-  de alimentos comuns (a estimativa aparece antes de salvar e pode ser
-  ajustada à mão). Mostra o total de calorias comidas hoje e, se o TMB
+- **Alimentação**: descreva o que comeu — **digitando, ditando por voz** 🎤
+  (com fallback automático para digitar se o navegador não suportar ou a
+  transcrição errar) **ou por foto** 📷 — e o app estima as calorias. Texto e
+  voz usam um dicionário local de alimentos comuns, sem depender de internet.
+  A foto usa a API gratuita do Google Gemini (opcional — configure sua
+  própria chave em Progresso > Ajustes, grátis em aistudio.google.com/apikey):
+  a foto é enviada só na hora de analisar e não fica guardada em lugar
+  nenhum depois — nem pelo app, nem pelo Google. Qualquer que seja o método,
+  a estimativa sempre aparece antes de salvar e pode ser ajustada à mão.
+  Mostra o total de calorias comidas hoje e, se o TMB
   estiver calculado (em Progresso), o saldo do dia — **agora somando também
   as calorias gastas no treino**: no aeróbico, usa a calorias que você
   informou, ou estima por tipo+tempo+peso corporal se deixar em branco (a
@@ -128,8 +133,9 @@ js/dados.js             leitura/escrita no localStorage
 js/app.js               navegação, telas, zoom, backup
 js/aerobico.js           tela de aeróbico
 js/abdominal.js         tela de abdômen (repetições/tempo + cronômetro)
-js/alimentacao.js       tela de alimentação (voz, calorias, saldo do dia)
-js/alimentos.js         dicionário local + estimador de calorias
+js/alimentacao.js       tela de alimentação (voz, foto, calorias, saldo do dia)
+js/alimentos.js         dicionário local + estimador de calorias por texto
+js/reconhecimentoFoto.js  chamada à API do Gemini (calorias por foto)
 js/biblioteca.js        índice da biblioteca de fotos (gerado)
 js/imagens.js           casa o nome do exercício com a foto certa
 img/lib/<slug>/*.jpg    fotos dos exercícios (2 por movimento)

@@ -188,6 +188,10 @@
       </div>
       <div class="campo-ajuda" id="itens-reconhecidos-alimentacao"></div>
 
+      <button type="button" class="btn-secundario" id="btn-foto-alimentacao" style="margin-top:10px;">📷 Reconhecer pela foto</button>
+      <input type="file" id="input-foto-alimentacao" accept="image/*" capture="environment" style="display:none;">
+      <div class="campo-ajuda" id="foto-alimentacao-status"></div>
+
       <div class="campo-label">CALORIAS (estimadas — ajuste se precisar)</div>
       <input class="campo-input" id="input-calorias-alimentacao" type="number" inputmode="numeric" placeholder="Ex.: 350">
 
@@ -286,6 +290,18 @@
         Importar backup (.json)
         <input type="file" id="input-importar-backup" accept="application/json,.json" style="display:none;">
       </label>
+
+      <div class="campo-label">RECONHECER COMIDA POR FOTO (opcional)</div>
+      <div class="campo-ajuda" style="margin-top:0;">
+        Usa a API gratuita do Google Gemini para identificar os alimentos de uma foto em Alimentação.
+        Crie uma chave grátis em <strong>aistudio.google.com/apikey</strong> (conta Google, sem cartão) e cole abaixo.
+        A chave fica só neste aparelho (não entra no backup); cada foto é enviada ao Google só na hora de analisar e não fica salva — nem pelo app, nem, segundo o Google, por eles depois.
+      </div>
+      <input class="campo-input" id="input-chave-gemini" type="password" placeholder="Cole aqui sua chave da API do Gemini" style="margin-top:8px;" autocomplete="off">
+      <div class="modal-linha-botoes">
+        <button type="button" class="btn-secundario btn-perigo" id="btn-remover-chave-gemini">Remover chave</button>
+        <button type="button" class="btn-principal" id="btn-salvar-chave-gemini" style="margin-top:0;">Salvar chave</button>
+      </div>
 
       <div class="campo-label">APP</div>
       <div class="versao-app" id="versao-app">versão —</div>
@@ -404,6 +420,7 @@
 <script src="./js/aerobico.js"></script>
 <script src="./js/abdominal.js"></script>
 <script src="./js/alimentos.js"></script>
+<script src="./js/reconhecimentoFoto.js"></script>
 <script src="./js/alimentacao.js"></script>
 <script src="./js/app.js"></script>
 </body>
