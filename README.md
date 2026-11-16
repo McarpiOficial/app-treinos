@@ -6,6 +6,15 @@ dados ficam salvos só no aparelho** (localStorage), sem servidor e sem login.
 
 ## Funcionalidades
 
+- **Perfis (Meu treino / Treino Simone)**: o mesmo app serve a duas pessoas.
+  No topo da tela Semana, o seletor troca de perfil; cada um tem a **própria
+  rotina e os próprios dados** (pesos, semanas, histórico, aeróbicos,
+  alimentação, TMB), guardados em chaves separadas do localStorage — um nunca
+  vê nem altera o outro. Quando o perfil da Simone está ativo, a barra de
+  calorias (fixa em toda tela) mostra "👤 Simone". O perfil escolhido fica
+  lembrado no aparelho. Backup/importar e "Apagar tudo" valem só para o perfil
+  ativo (e o app avisa se você tentar importar o backup de um perfil dentro do
+  outro). A chave opcional do Gemini é do aparelho, compartilhada.
 - **Semana**: escolha do dia de treino, contador de semanas de treino e
   progresso dos treinos da semana atual.
 - **Treino do dia**: exercícios com ilustração (toque para ampliar em tela
@@ -130,7 +139,7 @@ O script baixa as fotos, reduz para 520px (~24 KB cada) e regrava o índice
 ```
 index.html            shell do app e as 4 telas
 css/app.css            tema visual (mobile-first)
-js/exercicios.js        catálogo dos 4 dias e dos exercícios (editável; ROTINA_VERSAO)
+js/exercicios.js        perfis (PERFIS) e a rotina padrão de cada um; catálogo editável
 js/dados.js             leitura/escrita no localStorage
 js/app.js               navegação, telas, zoom, backup
 js/aerobico.js           tela de aeróbico

@@ -25,7 +25,13 @@
 
   <!-- ===== Tela: Semana ===== -->
   <section id="tela-semana" class="tela ativa">
-    <div class="topo"><h1>Meus Treinos</h1></div>
+    <div class="topo"><h1 id="titulo-app">Meus Treinos</h1></div>
+
+    <!-- Perfis: mesmo app, rotina e dados separados para cada pessoa -->
+    <div class="seletor-perfil" role="group" aria-label="Perfil de treino">
+      <button type="button" class="perfil-opcao" id="btn-perfil-marcio" data-perfil="marcio">Meu treino</button>
+      <button type="button" class="perfil-opcao" id="btn-perfil-simone" data-perfil="simone">Treino Simone</button>
+    </div>
 
     <div class="card card-semana">
       <div class="numero" id="semana-numero">SEMANA 1</div>

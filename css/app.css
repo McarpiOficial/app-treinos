@@ -80,6 +80,30 @@ button, input, select { font-family: inherit; }
   margin-bottom: 10px;
 }
 .topo h1 { font-size: 20px; margin: 0; }
+
+/* ---- Seletor de perfil (Meu treino / Treino Simone) ---- */
+.seletor-perfil {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  margin-bottom: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+}
+.perfil-opcao {
+  flex: 1;
+  min-height: 44px;
+  padding: 8px 10px;
+  background: transparent;
+  color: var(--texto-fraco);
+  border: 0;
+  border-radius: 10px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.perfil-opcao.ativo { background: var(--laranja); color: #1a0d05; font-weight: 800; }
 .btn-voltar {
   background: var(--bg-card);
   border: 1px solid var(--borda);

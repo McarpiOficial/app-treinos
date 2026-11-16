@@ -1,7 +1,9 @@
 // Camada de persistência: tudo fica no localStorage do próprio aparelho (offline-first).
 // Nenhum dado sai do celular — não há backend. Exportar/Importar servem como backup manual.
 const Dados = (function () {
-  const CHAVE = 'treinos.v1';
+  // Cada perfil (ver PERFIS em js/exercicios.js) tem a sua própria chave: o
+  // perfil "marcio" continua em 'treinos.v1', exatamente onde sempre esteve.
+  const CHAVE = PERFIL.chave;
   const VERSAO = 1;
 
   function hoje() {
@@ -257,6 +259,7 @@ const Dados = (function () {
 
   function salvarAgora() {
     if (salvarPendente) { clearTimeout(salvarPendente); salvarPendente = null; }
+    if (!estado) return true; // nada carregado ainda = nada a gravar (não escreve "null" por cima)
     try {
       localStorage.setItem(CHAVE, JSON.stringify(estado));
       return true;
@@ -596,13 +599,16 @@ const Dados = (function () {
 
   // ---- Backup ----
   function exportarJSON() {
-    return JSON.stringify(carregar(), null, 2);
+    // perfilId vai junto no arquivo só para o app avisar se alguém tentar
+    // importar o backup de um perfil dentro de outro; não é guardado no estado.
+    return JSON.stringify(Object.assign({ perfilId: PERFIL_ID }, carregar()), null, 2);
   }
 
   function importarJSON(texto) {
     const novo = JSON.parse(texto);
     if (typeof novo !== 'object' || novo === null) throw new Error('Arquivo inválido.');
     estado = Object.assign(estadoInicial(), novo);
+    delete estado.perfilId;
     estado.dias = novo.dias || {};
     estado.pesos = novo.pesos || {};
     estado.historico = novo.historico || [];
@@ -673,6 +679,7 @@ const Dados = (function () {
     framesExercicio: framesExercicio,
     exportarJSON: exportarJSON,
     importarJSON: importarJSON,
+    salvarAgora: salvarAgora,
     apagarTudo: apagarTudo
   };
 })();

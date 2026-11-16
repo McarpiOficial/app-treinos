@@ -5,7 +5,7 @@ const App = (function () {
   // Mostrada em Progresso > Ajustes, para o usuário conseguir CONFIRMAR pelo
   // olho que uma atualização chegou, sem depender de nenhum mecanismo
   // automático. Bumpar junto com CACHE em sw.js a cada mudança publicada.
-  const VERSAO_APP = 'v23';
+  const VERSAO_APP = 'v24';
 
   let telaAtual = 'semana';
   let diaEmVisualizacao = null;
@@ -83,13 +83,15 @@ const App = (function () {
     const queimadas = Math.round(Dados.caloriasQueimadasNoDia(hoje));
     const perfil = Dados.getPerfil();
     const sufixoQueimadas = queimadas ? ' &nbsp;·&nbsp; 🔥 <strong>' + queimadas + '</strong> kcal treino' : '';
+    // Fora do perfil padrão, a barra (visível em toda tela) diz de quem são os números.
+    const quem = PERFIL.rotulo ? '👤 <strong>' + PERFIL.rotulo + '</strong> &nbsp;·&nbsp; ' : '';
     if (!perfil) {
-      alvo.innerHTML = '🍽️ <strong>' + consumidas + '</strong> kcal comidas' + sufixoQueimadas + ' &nbsp;·&nbsp; calcule seu TMB em Progresso';
+      alvo.innerHTML = quem + '🍽️ <strong>' + consumidas + '</strong> kcal comidas' + sufixoQueimadas + ' &nbsp;·&nbsp; calcule seu TMB em Progresso';
       return;
     }
     const saldo = Math.round(perfil.tmb + queimadas - consumidas);
     const classe = saldo >= 0 ? 'saldo-pos' : 'saldo-neg';
-    alvo.innerHTML = '🍽️ <strong>' + consumidas + '</strong> kcal' + sufixoQueimadas + ' &nbsp;·&nbsp; TMB <strong>' + perfil.tmb + '</strong>'
+    alvo.innerHTML = quem + '🍽️ <strong>' + consumidas + '</strong> kcal' + sufixoQueimadas + ' &nbsp;·&nbsp; TMB <strong>' + perfil.tmb + '</strong>'
       + ' &nbsp;·&nbsp; Saldo <span class="' + classe + '">' + (saldo > 0 ? '+' : '') + saldo + '</span>';
   }
 
@@ -994,7 +996,8 @@ const App = (function () {
     const a = document.createElement('a');
     const dataArq = Dados.hoje();
     a.href = url;
-    a.download = 'backup-treinos-' + dataArq + '.json';
+    // Perfil no nome do arquivo para não confundir o backup de um com o do outro.
+    a.download = 'backup-treinos-' + (PERFIL_ID === 'marcio' ? '' : PERFIL_ID + '-') + dataArq + '.json';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -1005,21 +1008,68 @@ const App = (function () {
   function importarBackup(arquivo) {
     const leitor = new FileReader();
     leitor.onload = function () {
-      try {
-        Dados.importarJSON(leitor.result);
-        avisar('Backup importado com sucesso.');
-        renderSemana();
-        renderProgresso();
-      } catch (e) {
-        console.error(e);
+      let doArquivo = null;
+      try { doArquivo = JSON.parse(leitor.result); } catch (e) { /* tratado abaixo */ }
+      if (!doArquivo || typeof doArquivo !== 'object') {
         avisar('Arquivo inválido. Verifique o backup.');
+        return;
+      }
+
+      function importar() {
+        try {
+          Dados.importarJSON(leitor.result);
+          avisar('Backup importado com sucesso.');
+          renderSemana();
+          renderProgresso();
+        } catch (e) {
+          console.error(e);
+          avisar('Arquivo inválido. Verifique o backup.');
+        }
+      }
+
+      // Backups antigos (sem perfilId) são do perfil padrão. Se o arquivo é de
+      // outro perfil, avisa antes de sobrescrever os dados do perfil atual.
+      const idDoArquivo = doArquivo.perfilId || 'marcio';
+      if (idDoArquivo !== PERFIL_ID) {
+        const nomeDoArquivo = PERFIS[idDoArquivo] ? PERFIS[idDoArquivo].nome : idDoArquivo;
+        confirmar('Este backup é de "' + nomeDoArquivo + '", mas você está em "' + PERFIL.nome
+          + '". Importar mesmo assim SUBSTITUI todos os dados de "' + PERFIL.nome + '".', importar, 'Importar mesmo assim');
+      } else {
+        importar();
       }
     };
     leitor.readAsText(arquivo);
   }
 
+  // ---- Perfis (Meu treino / Treino Simone) ----
+  // Cada perfil tem rotina e dados próprios (ver PERFIS em js/exercicios.js).
+  // Trocar = gravar qual perfil está ativo e recarregar: todos os módulos
+  // reiniciam já lendo o espaço do perfil novo, sem risco de sobrar estado do outro.
+  function trocarPerfil(id) {
+    if (!PERFIS[id] || id === PERFIL_ID) return;
+    Dados.salvarAgora(); // garante que nada do perfil atual fique pendente
+    try {
+      localStorage.setItem(CHAVE_PERFIL_ATIVO, id);
+    } catch (e) {
+      avisar('Não foi possível trocar de perfil (armazenamento indisponível).');
+      return;
+    }
+    window.location.reload();
+  }
+
+  function configurarPerfis() {
+    el('titulo-app').textContent = PERFIL.titulo;
+    document.title = PERFIL.titulo;
+    document.querySelectorAll('.perfil-opcao').forEach(function (btn) {
+      const ativo = btn.dataset.perfil === PERFIL_ID;
+      btn.classList.toggle('ativo', ativo);
+      btn.setAttribute('aria-pressed', ativo ? 'true' : 'false');
+      btn.onclick = function () { trocarPerfil(btn.dataset.perfil); };
+    });
+  }
+
   function aoClicarApagarTudo() {
-    confirmar('Apagar TODOS os dados do app (pesos, semanas, histórico e aeróbicos)? Isso não pode ser desfeito.', function () {
+    confirmar('Apagar TODOS os dados de "' + PERFIL.nome + '" (pesos, semanas, histórico e aeróbicos)? O outro perfil não é afetado. Isso não pode ser desfeito.', function () {
       confirmar('Tem certeza mesmo? Essa é a última confirmação.', function () {
         Dados.apagarTudo();
         avisar('Todos os dados foram apagados.');
@@ -1036,6 +1086,7 @@ const App = (function () {
         else navegarPara(btn.dataset.tela);
       };
     });
+    configurarPerfis();
     el('btn-concluir-semana').onclick = aoClicarConcluirSemana;
     el('btn-concluir-treino').onclick = aoClicarConcluirTreino;
     el('btn-voltar-treino').onclick = function () { navegarPara('semana'); };
