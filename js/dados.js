@@ -22,7 +22,8 @@ const Dados = (function () {
       aerobicos: [],
       abdominais: [],
       alimentacoes: [],
-      perfil: null
+      perfil: null,
+      rotinaVersao: ROTINA_VERSAO
     };
   }
 
@@ -48,7 +49,9 @@ const Dados = (function () {
       estado.alimentacoes = dados.alimentacoes || [];
       estado.perfil = dados.perfil || null;
       estado.catalogoPersonalizado = dados.catalogoPersonalizado || null;
+      estado.rotinaVersao = dados.rotinaVersao || 1; // sem o campo = dados anteriores à rotina de 4 dias
       aplicarCatalogoSalvo();
+      migrarRotina();
       return estado;
     } catch (e) {
       console.error('Falha ao ler dados salvos, iniciando do zero.', e);
@@ -65,6 +68,17 @@ const Dados = (function () {
       CATALOGO.dias = estado.catalogoPersonalizado.dias;
       CATALOGO.exercicios = estado.catalogoPersonalizado.exercicios;
     }
+  }
+
+  // Quando a rotina padrão muda (ROTINA_VERSAO sobe em js/exercicios.js), quem
+  // já tinha dados salvos recebe a rotina nova UMA vez. Só o catálogo (dias e
+  // exercícios) é trocado — pesos, histórico, aeróbicos etc. ficam intactos.
+  function migrarRotina() {
+    if ((estado.rotinaVersao || 1) >= ROTINA_VERSAO) return;
+    estado.catalogoPersonalizado = null;
+    resetarCatalogoParaPadrao();
+    estado.rotinaVersao = ROTINA_VERSAO;
+    salvar();
   }
 
   function resetarCatalogoParaPadrao() {
@@ -597,8 +611,10 @@ const Dados = (function () {
     estado.alimentacoes = novo.alimentacoes || [];
     estado.perfil = novo.perfil || null;
     estado.catalogoPersonalizado = novo.catalogoPersonalizado || null;
+    estado.rotinaVersao = novo.rotinaVersao || 1;
     if (estado.catalogoPersonalizado) aplicarCatalogoSalvo();
     else resetarCatalogoParaPadrao();
+    migrarRotina();
     return salvarAgora();
   }
 

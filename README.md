@@ -1,6 +1,6 @@
 # Meus Treinos
 
-App pessoal (PWA) para acompanhar a rotina de musculação de 5 dias e os
+App pessoal (PWA) para acompanhar a rotina de musculação de 4 dias (A Peito e Tríceps · B Costas e Bíceps · C Pernas · D Ombros e Abdômen) e os
 treinos aeróbicos. Roda inteiramente no navegador do celular — **todos os
 dados ficam salvos só no aparelho** (localStorage), sem servidor e sem login.
 
@@ -130,7 +130,7 @@ O script baixa as fotos, reduz para 520px (~24 KB cada) e regrava o índice
 ```
 index.html            shell do app e as 4 telas
 css/app.css            tema visual (mobile-first)
-js/exercicios.js        catálogo dos 5 dias e dos exercícios (editável)
+js/exercicios.js        catálogo dos 4 dias e dos exercícios (editável; ROTINA_VERSAO)
 js/dados.js             leitura/escrita no localStorage
 js/app.js               navegação, telas, zoom, backup
 js/aerobico.js           tela de aeróbico

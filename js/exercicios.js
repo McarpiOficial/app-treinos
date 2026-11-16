@@ -1,66 +1,67 @@
 // Catálogo padrão (semente) da rotina: dias de treino, exercícios e séries.
-// Extraído dos prints de treino do usuário (5 dias, 3x10 a 12 em cada exercício).
+// Rotina atual: 4 dias (A Peito/Tríceps, B Costas/Bíceps, C Pernas, D Ombros/Abdômen).
+// ROTINA_VERSAO sobe sempre que esta semente muda — Dados.carregar() aplica a
+// rotina nova uma única vez em quem já tinha dados salvos.
 // Cada exercício tem um "id" e um "lib" (slug da foto em img/lib/<slug>/) e é
 // referenciado por múltiplos dias — a carga, porém, é registrada por DIA+exercício
 // (chave "diaId:exercicioId"), pois o mesmo movimento pode ter pesos diferentes
-// em treinos diferentes da semana (ex.: Dia 1 e Dia 5 repetem tríceps).
+// em treinos diferentes da semana (ex.: o mesmo movimento em dois dias).
 //
 // A rotina muda com o tempo (novos exercícios substituem antigos), então o app
 // permite editar/adicionar/remover exercícios em tempo de uso — ver Dados.editarExercicio
 // e cia. em js/dados.js. Este objeto é só a SEMENTE: nunca é modificado depois que o
 // app carrega; quem o usuário de fato vê e edita é o objeto CATALOGO (abaixo), que
 // começa como uma cópia desta semente e é sobrescrito pelas customizações salvas.
+const ROTINA_VERSAO = 2;
+
 const CATALOGO_PADRAO = {
   dias: [
     {
       id: 1,
       foco: 'Peito e Tríceps',
-      exercicios: ['supino', 'supino-inclinado', 'fly', 'triceps-corda', 'triceps-frances', 'triceps-testa']
+      exercicios: ['supino', 'supino-inclinado-halteres', 'fly', 'crossover-polia-alta', 'triceps-pulley', 'triceps-testa']
     },
     {
       id: 2,
       foco: 'Costas e Bíceps',
-      exercicios: ['remada-curvada', 'remada-aberta', 'puxada-aberta', 'rosca-scott', 'rosca-martelo', 'rosca-direta']
+      exercicios: ['puxada-aberta', 'remada-curvada', 'remada-baixa-triangulo', 'pulldown-polia', 'rosca-direta', 'rosca-martelo']
     },
     {
       id: 3,
-      foco: 'Perna Completo',
-      exercicios: ['agachamento-hack', 'cadeira-extensora', 'adutora', 'mesa-flexora', 'cadeira-flexora', 'leg-press']
+      foco: 'Pernas Completas',
+      exercicios: ['agachamento-livre', 'leg-press', 'cadeira-extensora', 'stiff-barra', 'mesa-flexora', 'panturrilha-em-pe']
     },
     {
       id: 4,
-      foco: 'Ombro Isolado',
-      exercicios: ['crucifixo-inverso', 'elevacao-frontal', 'elevacao-lateral', 'desenvolvimento']
-    },
-    {
-      id: 5,
-      foco: 'Bíceps e Tríceps',
-      exercicios: ['triceps-corda', 'triceps-frances', 'triceps-testa', 'rosca-direta', 'rosca-martelo', 'rosca-scott']
+      foco: 'Ombros e Abdômen',
+      exercicios: ['desenvolvimento', 'elevacao-lateral', 'elevacao-frontal-polia', 'crucifixo-inverso', 'encolhimento-halteres', 'abdominal-supra-polia']
     }
   ],
   exercicios: {
-    'supino': { nome: 'Supino', series: 3, reps: '10 a 12', lib: 'supino-reto' },
-    'supino-inclinado': { nome: 'Supino Inclinado', series: 3, reps: '10 a 12', lib: 'supino-inclinado' },
-    'fly': { nome: 'Fly', series: 3, reps: '10 a 12', lib: 'voador-peck-deck' },
-    'triceps-corda': { nome: 'Tríceps Corda', series: 3, reps: '10 a 12', lib: 'triceps-corda' },
-    'triceps-frances': { nome: 'Tríceps Francês', series: 3, reps: '10 a 12', lib: 'triceps-frances' },
+    'supino': { nome: 'Supino Reto com Barra', series: 4, reps: '8 a 10', lib: 'supino-reto' },
+    'supino-inclinado-halteres': { nome: 'Supino Inclinado com Halteres', series: 4, reps: '8 a 12', lib: 'supino-inclinado-com-halteres' },
+    'fly': { nome: 'Crucifixo na Máquina', series: 3, reps: '12 a 15', lib: 'voador-peck-deck' },
+    'crossover-polia-alta': { nome: 'Crossover na Polia Alta', series: 3, reps: '12 a 15', lib: 'crossover-na-polia' },
+    'triceps-pulley': { nome: 'Tríceps Pulley', series: 4, reps: '10 a 12', lib: 'triceps-pulley' },
     'triceps-testa': { nome: 'Tríceps Testa', series: 3, reps: '10 a 12', lib: 'triceps-testa' },
-    'remada-curvada': { nome: 'Remada Curvada', series: 3, reps: '10 a 12', lib: 'remada-curvada' },
-    'remada-aberta': { nome: 'Remada Aberta', series: 3, reps: '10 a 12', lib: 'remada-sentada-baixa' },
-    'puxada-aberta': { nome: 'Puxada Aberta', series: 3, reps: '10 a 12', lib: 'puxada-aberta' },
-    'rosca-scott': { nome: 'Rosca Scott', series: 3, reps: '10 a 12', lib: 'rosca-scott' },
+    'puxada-aberta': { nome: 'Puxada Frontal Aberta', series: 4, reps: '8 a 10', lib: 'puxada-aberta' },
+    'remada-curvada': { nome: 'Remada Curvada com Barra', series: 4, reps: '8 a 10', lib: 'remada-curvada' },
+    'remada-baixa-triangulo': { nome: 'Remada Baixa no Triângulo', series: 3, reps: '10 a 12', lib: 'remada-sentada-baixa' },
+    'pulldown-polia': { nome: 'Pulldown na Polia', series: 3, reps: '12 a 15', lib: 'pulldown-com-braco-estendido' },
+    'rosca-direta': { nome: 'Rosca Direta com Barra', series: 4, reps: '8 a 10', lib: 'rosca-direta' },
     'rosca-martelo': { nome: 'Rosca Martelo', series: 3, reps: '10 a 12', lib: 'rosca-martelo' },
-    'rosca-direta': { nome: 'Rosca Direta', series: 3, reps: '10 a 12', lib: 'rosca-direta' },
-    'agachamento-hack': { nome: 'Agachamento Hack', series: 3, reps: '10 a 12', lib: 'agachamento-hack' },
-    'cadeira-extensora': { nome: 'Cadeira Extensora', series: 3, reps: '10 a 12', lib: 'cadeira-extensora' },
-    'adutora': { nome: 'Adutora', series: 3, reps: '10 a 12', lib: 'cadeira-adutora' },
-    'mesa-flexora': { nome: 'Mesa Flexora', series: 3, reps: '10 a 12', lib: 'mesa-flexora' },
-    'cadeira-flexora': { nome: 'Cadeira Flexora', series: 3, reps: '10 a 12', lib: 'cadeira-flexora' },
-    'leg-press': { nome: 'Leg Press', series: 3, reps: '10 a 12', lib: 'leg-press' },
-    'crucifixo-inverso': { nome: 'Crucifixo Inverso', series: 3, reps: '10 a 12', lib: 'crucifixo-inverso-na-maquina' },
-    'elevacao-frontal': { nome: 'Elevação Frontal', series: 3, reps: '10 a 12', lib: 'elevacao-frontal' },
-    'elevacao-lateral': { nome: 'Elevação Lateral', series: 3, reps: '10 a 12', lib: 'elevacao-lateral' },
-    'desenvolvimento': { nome: 'Desenvolvimento', series: 3, reps: '10 a 12', lib: 'desenvolvimento-com-halteres' }
+    'agachamento-livre': { nome: 'Agachamento Livre', series: 4, reps: '8 a 10', lib: 'agachamento-livre' },
+    'leg-press': { nome: 'Leg Press 45°', series: 4, reps: '10 a 12', lib: 'leg-press' },
+    'cadeira-extensora': { nome: 'Cadeira Extensora', series: 3, reps: '12 a 15', lib: 'cadeira-extensora' },
+    'stiff-barra': { nome: 'Stiff com Barra', series: 4, reps: '8 a 10', lib: 'stiff-com-barra' },
+    'mesa-flexora': { nome: 'Mesa Flexora', series: 3, reps: '12 a 15', lib: 'mesa-flexora' },
+    'panturrilha-em-pe': { nome: 'Panturrilha em Pé', series: 4, reps: '15', lib: 'panturrilha-em-pe' },
+    'desenvolvimento': { nome: 'Desenvolvimento com Halteres', series: 4, reps: '8 a 10', lib: 'desenvolvimento-com-halteres' },
+    'elevacao-lateral': { nome: 'Elevação Lateral com Halteres', series: 4, reps: '12 a 15', lib: 'elevacao-lateral' },
+    'elevacao-frontal-polia': { nome: 'Elevação Frontal na Polia', series: 3, reps: '10 a 12', lib: 'elevacao-frontal-na-polia' },
+    'crucifixo-inverso': { nome: 'Crucifixo Inverso na Máquina', series: 4, reps: '12 a 15', lib: 'crucifixo-inverso-na-maquina' },
+    'encolhimento-halteres': { nome: 'Encolhimento com Halteres', series: 3, reps: '12 a 15', lib: 'encolhimento-com-halteres' },
+    'abdominal-supra-polia': { nome: 'Abdominal Supra na Polia', series: 4, reps: '15', lib: 'abdominal-na-polia' }
   },
   tiposAerobico: ['Spinning', 'Esteira', 'Bike', 'Elíptico', 'Corrida', 'Caminhada', 'Escada', 'Natação', 'Outro'],
   // Exercícios de abdômen: "modo" é só o padrão sugerido ao escolher — o
