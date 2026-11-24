@@ -18,7 +18,8 @@
 // Dados.carregar() aplica a rotina nova uma única vez em quem já tinha dados.
 const PERFIS = {
   marcio: { id: 'marcio', nome: 'Meu treino', titulo: 'Meus Treinos', rotulo: '', chave: 'treinos.v1', rotinaVersao: 2 },
-  simone: { id: 'simone', nome: 'Treino Simone', titulo: 'Treino Simone', rotulo: 'Simone', chave: 'treinos.simone.v1', rotinaVersao: 1 }
+  simone: { id: 'simone', nome: 'Treino Simone', titulo: 'Treino Simone', rotulo: 'Simone', chave: 'treinos.simone.v1', rotinaVersao: 1 },
+  andre: { id: 'andre', nome: 'Treino André', titulo: 'Treino André', rotulo: 'André', chave: 'treinos.andre.v1', rotinaVersao: 1 }
 };
 const CHAVE_PERFIL_ATIVO = 'treinos.perfilAtivo';
 
@@ -131,6 +132,50 @@ const ROTINAS_PADRAO = {
       'rosca-direta': { nome: 'Rosca Direta com Barra', series: 3, reps: '15', lib: 'rosca-direta' },
       'rosca-alternada': { nome: 'Rosca Alternada', series: 3, reps: '12', lib: 'rosca-alternada' },
       'rosca-martelo': { nome: 'Rosca Martelo', series: 3, reps: '12', lib: 'rosca-martelo' }
+    }
+  },
+  // André: 4 dias, sempre 2 exercícios por grupo muscular, 3 séries de 10 a 12
+  // (abdômen 3x15). Escolhas básicas e seguras, para quem está começando.
+  andre: {
+    dias: [
+      {
+        id: 1,
+        foco: 'Peito e Tríceps',
+        exercicios: ['supino-reto', 'supino-inclinado-halteres', 'triceps-pulley', 'triceps-testa']
+      },
+      {
+        id: 2,
+        foco: 'Costas e Bíceps',
+        exercicios: ['puxada-aberta', 'remada-baixa', 'rosca-direta', 'rosca-martelo']
+      },
+      {
+        id: 3,
+        foco: 'Pernas',
+        exercicios: ['leg-press', 'cadeira-extensora', 'mesa-flexora', 'stiff-halteres']
+      },
+      {
+        id: 4,
+        foco: 'Ombros e Abdômen',
+        exercicios: ['desenvolvimento-halteres', 'elevacao-lateral', 'abdominal-supra', 'abdominal-infra']
+      }
+    ],
+    exercicios: {
+      'supino-reto': { nome: 'Supino Reto', series: 3, reps: '10 a 12', lib: 'supino-reto' },
+      'supino-inclinado-halteres': { nome: 'Supino Inclinado com Halteres', series: 3, reps: '10 a 12', lib: 'supino-inclinado-com-halteres' },
+      'triceps-pulley': { nome: 'Tríceps Pulley', series: 3, reps: '10 a 12', lib: 'triceps-pulley' },
+      'triceps-testa': { nome: 'Tríceps Testa', series: 3, reps: '10 a 12', lib: 'triceps-testa' },
+      'puxada-aberta': { nome: 'Puxada Aberta', series: 3, reps: '10 a 12', lib: 'puxada-aberta' },
+      'remada-baixa': { nome: 'Remada Baixa', series: 3, reps: '10 a 12', lib: 'remada-sentada-baixa' },
+      'rosca-direta': { nome: 'Rosca Direta', series: 3, reps: '10 a 12', lib: 'rosca-direta' },
+      'rosca-martelo': { nome: 'Rosca Martelo', series: 3, reps: '10 a 12', lib: 'rosca-martelo' },
+      'leg-press': { nome: 'Leg Press 45°', series: 3, reps: '10 a 12', lib: 'leg-press' },
+      'cadeira-extensora': { nome: 'Cadeira Extensora', series: 3, reps: '10 a 12', lib: 'cadeira-extensora' },
+      'mesa-flexora': { nome: 'Mesa Flexora', series: 3, reps: '10 a 12', lib: 'mesa-flexora' },
+      'stiff-halteres': { nome: 'Stiff com Halteres', series: 3, reps: '10 a 12', lib: 'stiff-com-halteres' },
+      'desenvolvimento-halteres': { nome: 'Desenvolvimento com Halteres', series: 3, reps: '10 a 12', lib: 'desenvolvimento-com-halteres' },
+      'elevacao-lateral': { nome: 'Elevação Lateral', series: 3, reps: '10 a 12', lib: 'elevacao-lateral' },
+      'abdominal-supra': { nome: 'Abdominal Supra', series: 3, reps: '15', lib: 'abdominal-supra' },
+      'abdominal-infra': { nome: 'Abdominal Infra', series: 3, reps: '15', lib: 'abdominal-infra' }
     }
   }
 };

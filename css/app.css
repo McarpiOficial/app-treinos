@@ -94,12 +94,14 @@ button, input, select { font-family: inherit; }
 .perfil-opcao {
   flex: 1;
   min-height: 44px;
-  padding: 8px 10px;
+  padding: 6px 4px;
   background: transparent;
   color: var(--texto-fraco);
   border: 0;
   border-radius: 10px;
   font: inherit;
+  font-size: 13px;
+  line-height: 1.15;
   font-weight: 600;
   cursor: pointer;
 }
