@@ -42,7 +42,7 @@ dados ficam salvos só no aparelho** (localStorage), sem servidor e sem login.
   então cada exercício pode ser renomeado, ter séries/repetições ajustadas ou
   ser removido do dia (toque no ✏️ no card), e dá para adicionar exercícios
   novos a qualquer dia. **Ao criar ou renomear, o app procura sozinho a foto
-  correspondente** numa biblioteca de 136 exercícios — a busca entende
+  correspondente** numa biblioteca de 137 exercícios — a busca entende
   sinônimos, então "peck deck", "crucifixo máquina" e "voador" caem no mesmo
   lugar. Se o palpite errar, "Escolher outra" abre a biblioteca com busca, e
   "Usar foto minha" aceita uma foto da galeria/câmera. Escolha manual é

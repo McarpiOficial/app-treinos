@@ -106,6 +106,7 @@ module.exports = [
   { pt: 'Tríceps Francês na Corda', en: 'Cable Rope Overhead Triceps Extension', sin: ['triceps frances corda', 'triceps acima da cabeca', 'extensao acima da cabeca'] },
   { pt: 'Tríceps Coice', en: 'Tricep Dumbbell Kickback', sin: ['coice', 'kickback', 'triceps coice halter'] },
   { pt: 'Tríceps no Banco', en: 'Bench Dips', sin: ['triceps banco', 'mergulho no banco'] },
+  { pt: 'Tríceps no Banco Máquina', en: 'Dip Machine', sin: ['triceps banco maquina', 'triceps no banco na maquina', 'dip machine', 'mergulho na maquina', 'maquina de mergulho', 'paralelas na maquina', 'triceps sentado maquina'] },
   { pt: 'Mergulho nas Paralelas', en: 'Dips - Triceps Version', sin: ['paralelas', 'mergulho', 'dips', 'mergulho paralelas', 'triceps paralelas'] },
   { pt: 'Tríceps na Máquina', en: 'Machine Triceps Extension', sin: ['triceps maquina'] },
   { pt: 'Tríceps Pegada Inversa', en: 'Reverse Grip Triceps Pushdown', sin: ['triceps inverso', 'triceps pronado', 'triceps supinado'] },
