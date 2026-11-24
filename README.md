@@ -10,8 +10,9 @@ dados ficam salvos só no aparelho** (localStorage), sem servidor e sem login.
   três pessoas. No topo da tela Semana, o seletor troca de perfil; cada um tem
   a **própria rotina e os próprios dados** (pesos, semanas, histórico,
   aeróbicos, alimentação, TMB), guardados em chaves separadas do localStorage
-  — um nunca vê nem altera os outros. O perfil do André tem 4 dias, sempre com
-  2 exercícios por grupo muscular. Fora do perfil padrão, a barra de
+  — um nunca vê nem altera os outros. O perfil do André (iniciante) tem 4 dias, sempre
+  com 2 exercícios por grupo muscular, baseados em máquinas e polias (peso
+  livre só no bíceps). Fora do perfil padrão, a barra de
   calorias (fixa em toda tela) mostra de quem são os números
   ("👤 Simone", "👤 André"). O perfil escolhido fica
   lembrado no aparelho. Backup/importar e "Apagar tudo" valem só para o perfil
