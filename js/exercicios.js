@@ -19,7 +19,7 @@
 const PERFIS = {
   marcio: { id: 'marcio', nome: 'Meu treino', titulo: 'Meus Treinos', rotulo: '', chave: 'treinos.v1', rotinaVersao: 2 },
   simone: { id: 'simone', nome: 'Treino Simone', titulo: 'Treino Simone', rotulo: 'Simone', chave: 'treinos.simone.v1', rotinaVersao: 1 },
-  andre: { id: 'andre', nome: 'Treino André', titulo: 'Treino André', rotulo: 'André', chave: 'treinos.andre.v1', rotinaVersao: 2 }
+  andre: { id: 'andre', nome: 'Treino André', titulo: 'Treino André', rotulo: 'André', chave: 'treinos.andre.v1', rotinaVersao: 3 }
 };
 const CHAVE_PERFIL_ATIVO = 'treinos.perfilAtivo';
 
@@ -142,7 +142,7 @@ const ROTINAS_PADRAO = {
       {
         id: 1,
         foco: 'Peito e Tríceps',
-        exercicios: ['supino-maquina', 'peck-deck', 'triceps-maquina', 'triceps-pulley']
+        exercicios: ['supino-maquina', 'peck-deck', 'triceps-corda', 'triceps-pulley']
       },
       {
         id: 2,
@@ -163,7 +163,7 @@ const ROTINAS_PADRAO = {
     exercicios: {
       'supino-maquina': { nome: 'Supino na Máquina', series: 3, reps: '10 a 12', lib: 'supino-na-maquina' },
       'peck-deck': { nome: 'Peck Deck (Voador)', series: 3, reps: '10 a 12', lib: 'voador-peck-deck' },
-      'triceps-maquina': { nome: 'Tríceps na Máquina', series: 3, reps: '10 a 12', lib: 'triceps-na-maquina' },
+      'triceps-corda': { nome: 'Tríceps Corda', series: 3, reps: '10 a 12', lib: 'triceps-corda' },
       'triceps-pulley': { nome: 'Tríceps Pulley', series: 3, reps: '10 a 12', lib: 'triceps-pulley' },
       'puxada-aberta': { nome: 'Puxada Aberta', series: 3, reps: '10 a 12', lib: 'puxada-aberta' },
       'remada-maquina': { nome: 'Remada na Máquina', series: 3, reps: '10 a 12', lib: 'remada-articulada' },
